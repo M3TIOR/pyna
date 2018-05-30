@@ -1,6 +1,14 @@
-import mychrobe
+#!/usr/bin/env python3
+
 import random
 import sys
+
+sys.path.append("../src")
+# import pyna
+from pyna import (
+	# ADD FUTURE FUNCTIONS LATER
+	dna2bytes
+)
 
 def bin(data):
 	# tool for looking at binary output
@@ -27,7 +35,7 @@ if __name__ == "__main__":
 
 	print("Using Test Strand: " + strand)
 
-	tail = mychrobe.dna2bytes(strand)
+	tail = dna2bytes(strand)
 	# USING STATIC:
 	#	11001111
 	#	00111011
@@ -37,14 +45,14 @@ if __name__ == "__main__":
 	print("Tail Test:")
 	bin(tail)
 
-	head = mychrobe.dna2bytes(strand, head=True)
+	head = dna2bytes(strand, head=True)
 	print("Head Test:")
 	bin(head)
 
-	fliptail = mychrobe.dna2bytes(strand, flip=True)
+	fliptail = dna2bytes(strand, flip=True)
 	print("Flip + Tail Test:")
 	bin(fliptail)
 
-	fliphead = mychrobe.dna2bytes(strand, flip=True, head=True)
+	fliphead = dna2bytes(strand, flip=True, head=True)
 	print("Flip + Head Test:")
 	bin(fliphead)
