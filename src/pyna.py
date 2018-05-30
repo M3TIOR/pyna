@@ -109,20 +109,26 @@ def dna2bytes(dna, encoding=DNAEncoding, flip=False, head=False):
 
 		index = 0 				# index counter for byte rollover
 		length = len(dna)		# get the length of our dna, cap read distance
-		offset = length % 8		# the amount of bits that remain to be filled
+		offset = 8-(length % 8)	# the amount of bits that remain to be filled
+		inset = 0
 
 		# To flip the binary translation we just use the product of a positive
 		# or negative integer with our index to produce the correct,
 		# directionally adjusted index position for our array.
 		if flip:
 			direction = -1
+			
+			# compensate for negative memory justification
+			length += 1
+			index += 1
+			inset -= 1
 		else:
 			direction = 1
 
 		# here, we decide what to do if we have an incomplete byte
 		if head:
 			# if we have "head" set, we want to put the offset at the beginning
-			index += 8-offset
+			inset += offset
 
 		# for nucleotide in dna:
 		while (index < length):
@@ -133,7 +139,7 @@ def dna2bytes(dna, encoding=DNAEncoding, flip=False, head=False):
 			nucleobyte <<= 1 # move stored bits left 1
 			nucleobyte |= int(map[nucleotide]) # append next bit to the right
 
-			if index % 8 == 7: # if we've just mapped the last bit in a byte
+			if (index+inset) % 8 == 7: # if we've just mapped the last bit in a byte
 				obin.append(nucleobyte) # append byte to the right of or output
 				nucleobyte = 0 # reset stored byte value to zero
 
@@ -142,7 +148,7 @@ def dna2bytes(dna, encoding=DNAEncoding, flip=False, head=False):
 		if not head:
 			# othewise, we want the offset put at the end, or a partial "tail"
 			# append the final byte to the right of or output with padding
-			obin.append(nucleobyte<< (8-offset)) # push left with right justification
+			obin.append(nucleobyte<<offset) # push left with right justification
 
 	except(KeyError):
 		raise TypeError("Broken Nucleotide Sequence: Unrecognized Nucleotide - "+char+" at #"+index)
