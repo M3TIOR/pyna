@@ -7,19 +7,26 @@ import tests.dnaencoding as dnaencoding
 
 
 if __name__ == "__main__":
-	runner = unittest.TextTestRunner()
-	suite = unittest.TestSuite()
+	runner = unittest.TextTestRunner(verbosity=2)
 
-	#Add All Test Modules
-	suite.addTest( dna2bytes.DNA2Bytes('test_tail_static') )
-	suite.addTest( dna2bytes.DNA2Bytes('test_head_static') )
-	suite.addTest( dna2bytes.DNA2Bytes('test_flipTail_static') )
-	suite.addTest( dna2bytes.DNA2Bytes('test_flipHead_static') )
+	dna2bytes_tests = unittest.TestSuite(tests=(
+		dna2bytes.DNA2Bytes('test_tail_static'),
+		dna2bytes.DNA2Bytes('test_head_static'),
+		dna2bytes.DNA2Bytes('test_flipTail_static'),
+		dna2bytes.DNA2Bytes('test_flipHead_static')
+	))
 
-	suite.addTest( dnaencoding.DNAEncoding('test_new_instance') )
-	suite.addTest( dnaencoding.DNAEncoding('test_rebinding') )
-	suite.addTest( dnaencoding.DNAEncoding('test_wrong_keycount_rebinding') )
-	suite.addTest( dnaencoding.DNAEncoding('test_redundant_index_rebinding') )
+	dnaencoding_tests = unittest.TestSuite(tests=(
+		dnaencoding.DNAEncoding('test_new_instance'),
+		dnaencoding.DNAEncoding('test_rebinding'),
+		dnaencoding.DNAEncoding('test_wrong_keycount_rebinding'),
+		dnaencoding.DNAEncoding('test_redundant_index_rebinding')
+	))
+
+	pyna = unittest.TestSuite(tests=(
+		dna2bytes_tests,
+		dnaencoding_tests,
+	))
 
 	# Run all test modules!
-	runner.run(suite)
+	runner.run(pyna)
