@@ -19,7 +19,7 @@
 #
 # Getting to the point, one of the quotes I remember the most from being raised
 # into a Seventh Day Adventist household was that God created us in his image.
-# A thought I'd been quick to dissregard in the past. But I'm forced to ask
+# A thought that I'd been quick to dissregard in the past. But I'm forced to ask
 # myself:
 #
 # What if DNA is bytecode?
@@ -129,7 +129,7 @@ class RNAEncoding(NucleoEncoding):
 #	that each nucleotide pair instead represents a binary signal, on or off.
 #	Since otherwise, the resulting encoding would be identical to that of its
 #	RNA counterpart. Which wouldn't make any sense. Especially considering that
-#	RNA's only use, is transcription.
+#	RNA is only used for transcription and storage with in cells.
 #
 #	So when DNA is being executed / read, having to read both of it's sides
 #	individually would be inefficient. This isn't to say that I think a
@@ -153,7 +153,7 @@ def dna2bytes(dna, encoding=DNAEncoding(), flip=False, head=False):
 		index = 0 				# index counter for byte rollover
 		length = len(dna)		# get the length of our dna, cap read distance
 		offset = 8-(length % 8)	# the amount of bits that remain to be filled
-		inset = 0
+		inset = 0				# the amount of empty bits left before beginning transcription 
 
 		# To flip the binary translation we just use the product of a positive
 		# or negative integer with our index to produce the correct,
