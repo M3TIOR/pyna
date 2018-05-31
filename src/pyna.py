@@ -71,10 +71,8 @@ class DNAEncoding(NucleoEncoding):
 	#
 	# Needs DNA raw dna comparison to validate.
 	def __init__(self, off={1:"G", 2:"C"}, on={3:"A", 4:"T"}):
-		if len(on) != 2:
-			raise NucleotideError("DNA encodings must have two nucleotides on")
-		if len(off) != 2:
-			raise NucleotideError("DNA encodings must have two nucleotides off")
+		if len(on) != 2 or len(off) != 2:
+			raise NucleotideError("DNA encodings must have two nucleotides on and off", on, off)
 
 		# Make master dictionary to sort through all of our options together
 		all = {}
@@ -153,7 +151,7 @@ def dna2bytes(dna, encoding=DNAEncoding(), flip=False, head=False):
 		index = 0 				# index counter for byte rollover
 		length = len(dna)		# get the length of our dna, cap read distance
 		offset = 8-(length % 8)	# the amount of bits that remain to be filled
-		inset = 0				# the amount of empty bits left before beginning transcription 
+		inset = 0				# the amount of empty bits left before beginning transcription
 
 		# To flip the binary translation we just use the product of a positive
 		# or negative integer with our index to produce the correct,
