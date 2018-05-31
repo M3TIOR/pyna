@@ -26,24 +26,40 @@
 #
 #
 
-from enum import Enum, IntEnum
+from enum import Enum
+from collections import OrderedDict
 
 class Nucleotides(Enum):
+	# NOTE: may remove, IDK why I have this here
 	Adenine = 'A'
 	Cytosine = 'C'
 	Guanine = 'G'
 	Uracil = 'U'
 	Thymine = 'T'
 
-class NucleoEncoding(IntEnum):
+
+class NucleotideError(Exception):
 	"""
-		Base class for implementing bitwise nucleotide encodings
+		Base class for implementing nucleotide errors
 	"""
 	pass
 
+class NucleoEncoding(OrderedDict):
+	"""
+		Base class for implementing bitwise nucleotide encodings
+	"""
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		if len(self) != 4:
+			raise NucleotideError("Nucleotide encodings must contain four Nucleotides")
+		for v in self.values():
+			if v == None:
+				raise ValueError("Nucleotide values can not be None")
+
+
 class DNAEncoding(NucleoEncoding):
 	"""
-		Bitwise encoding for Deoxyribonucleic Acid
+		Base class for implementing DNA encoding
 	"""
 	# A pairs with G
 	# C pairs with T
@@ -54,10 +70,34 @@ class DNAEncoding(NucleoEncoding):
 	# Well, that or it's inverse G & C == 1, A && T == 0
 	#
 	# Needs DNA raw dna comparison to validate.
-	G = 0
-	C = 0
-	A = 1
-	T = 1
+	def __init__(self, off={1:"G", 2:"C"}, on={3:"A", 4:"T"}):
+		if len(on) != 2:
+			raise NucleotideError("DNA encodings must have two nucleotides on")
+		if len(off) != 2:
+			raise NucleotideError("DNA encodings must have two nucleotides off")
+
+		# Make master dictionary to sort through all of our options together
+		all = {}
+		out = [] # our output dictionary in list form for OrderedDict
+
+		# add both of our lists to the master
+		all.update(off)
+		all.update(on)
+
+		# NOTE:
+		#	This will sort all our options by key, which will align
+		#	our values how they need to be, then we can add the values
+		# 	into our output list. If there are any redundant nucleotide keys,
+		#	they will be discarded once passed to super.__init__
+		for key, value in sorted(all.items(), key=lambda t: t[0]):
+			# if our value will be zero, output pair
+			if value in off.values():
+				out.append((value, 0))
+			# if our value will be one, output pair
+			if value in on.values():
+				out.append((value, 1))
+
+		super().__init__(out)
 
 class RNAEncoding(NucleoEncoding):
 	"""
@@ -69,10 +109,13 @@ class RNAEncoding(NucleoEncoding):
 	# However, if my hypothesis about DNA being bytecode is correct; this
 	# shouldn't matter, as it would just need to be a constant medium for
 	# storing the nucleotide sequence in a more compact form factor.
-	G = 0
-	C = 1
-	A = 2
-	U = 3
+	def __init__(self):
+		super().__init__({
+			"G": 0,
+			"C": 1,
+			"A": 2,
+			"U": 3,
+		})
 
 
 #DNA = ['g','c','a','t']
@@ -94,11 +137,11 @@ class RNAEncoding(NucleoEncoding):
 #	that adding redundancy to the most simple form of life seems like overkill.
 #
 # NOTE: this assumes that the input encoding is text left to right
-def dna2bytes(dna, encoding=DNAEncoding, flip=False, head=False):
+def dna2bytes(dna, encoding=DNAEncoding(), flip=False, head=False):
 	"""
 		Converts a string of encoded dna to a binary blob.
 	"""
-	map = encoding.__dict__ # rebinding of enum to dictionary for easy ref
+	map = encoding # rebinding of enum to dictionary for easy ref
 	dna = dna.upper() # our input dna sequence
 	obin = bytearray() # our output binary
 	nucleobyte = 0 # our translated byte as an integer value
@@ -117,7 +160,7 @@ def dna2bytes(dna, encoding=DNAEncoding, flip=False, head=False):
 		# directionally adjusted index position for our array.
 		if flip:
 			direction = -1
-			
+
 			# compensate for negative memory justification
 			length += 1
 			index += 1
@@ -171,7 +214,7 @@ def compress_rna(string, encoding=RNAEncoding):
 def decompress_rna(bytes, encoding=RNAEncoding):
 	raise NotImplementedError()
 
-def dna2rna(string):
+def dna2rna(string): # just flop the T to U and vice versa
 	raise NotImplementedError()
 
 def rna2dna(string):
