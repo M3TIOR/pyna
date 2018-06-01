@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 
+#
+# M3TIOR 2018
+#	XXX don't forget you can call a library as a main executable in python XXX
+#
+
 import sys as _sys
 import os.path as path
 
 
-# NOTE:
+# NOTE: MISC
 #	as long as we import something from this file, these lines will always
 #	get run, so we will be able to import pyna from the importing file.
 #
 #	Add source files to import search path
 srcdir = path.abspath(path.join(path.dirname(repr(__file__)[1:-1]), "../../src"))
 _sys.path.append(srcdir)
-
-
 
 # data utilities
 def print_bin(data):

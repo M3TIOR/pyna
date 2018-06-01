@@ -11,7 +11,8 @@
 #	because this is how I want it to work. Four lines is tolerable.
 try:
 	from . import bin
-except(SystemError):
+except(ImportError):
+	# this allows each individual test to be run as a script independently
 	from __init__ import bin
 
 import unittest

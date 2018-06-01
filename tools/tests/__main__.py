@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+#
+# M3TIOR 2018
+#	XXX don't forget you can call a library as a main executable in python XXX
+#
+
 # import unittest and test modules
 import unittest
 import tests.dna2bytes as dna2bytes
