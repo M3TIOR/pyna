@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys as _sys
+import os.path as path
 
 
 # NOTE:
@@ -8,8 +9,8 @@ import sys as _sys
 #	get run, so we will be able to import pyna from the importing file.
 #
 #	Add source files to import search path
-_sys.path.append("../../src") # Module imports
-_sys.path.append("../src") # Suite imports
+srcdir = path.abspath(path.join(path.dirname(repr(__file__)[1:-1]), "../../src"))
+_sys.path.append(srcdir)
 
 
 
