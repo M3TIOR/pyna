@@ -27,7 +27,7 @@
 #
 
 from enum import Enum
-from collections import OrderedDict
+from copy import copy
 
 class Nucleotides(Enum):
 	# NOTE: may remove, IDK why I have this here
@@ -78,30 +78,33 @@ class Nucleotide():
 		self.char = str(value[0])
 
 		self.name = name # whatever we want the nucleotide represented by
-		self.transient = bool(transient) # the nucleotide that should be swapped
+		self._transient = bool(transient) # the nucleotide that should be swapped
 		self._sibling = None # holder for our sibling refference
 
 	def __str__(self):
 		return str(self.char)
 
 	def pair(self, sibling, rebind=False):
-		if self.transient:
+		if self._transient:
 			# transient nucleotides are exempt from BindingErrors. Since
 			# they can swap places with their other transients, they are
 			# allowed to have the same foster siblings as other transients
-			if sibling.transient:
+			if sibling._transient:
 				# but two transients cannot be siblings
-				raise BindingError("Two transient nucleotides cannot be siblings.")
+				raise BindingError(sibling, "Two transient nucleotides cannot be siblings.")
 			sibling.pair(self, rebind=True)
 		else:
 			if (sibling.sibling() not None or self._sibling not None) and not rebind:
-				raise BindingError("Nucleotide \""self+"\" already has a sibling.")
+				raise BindingError(self.pair, "Nucleotide \""self+"\" already has a sibling.")
 
 			self._sibling = sibling
 			self._sibling._sibling = self
 
 	def sibling(self):
 		return self._sibling
+
+	def is_transient(self):
+		return self._transient
 
 	@staticmethod
 	def siblings(n1, n2, transient=0):
@@ -122,17 +125,98 @@ class Nucleotide():
 
 		return (brother, sister) # return them
 
-class NucleotideEncoding():
+
+class BioEncoding():
 	"""
 		Base class for implementing bitwise nucleotide encodings
 	"""
-	def __init__(self, nv1, nv2, nv3, nv4):
-		self._nucleotides = [tuple[0] for tuple in ordered_list]
-		self._values = [tuple[1] for tuple in ordered_list]
-		self._ordered = OrderedDict([nv1, nv2, nv3, nv4])
-	def __getattr__(self, attr):
-		self.
-	def
+
+	def __init__(self, n1, n2, n3, n4, executable=False):
+		# positional args enforce strictness
+
+		# encodings don't need a transient
+		self._hastransient = False # but if we have one, there must only be one.
+		self._isexecutable = executable # toggle storage vs executable encoding
+
+		# NOTE:
+		#	Make a copy of the input variables instead of using them
+		#	in place just in case someone decides to create two different
+		#	bioencodings with the same nucleotides.
+		#
+		#	This is also a read only data structure
+		self._nucleotides = copy([n1, n2, n3, n4]) # carry out strict indexing
+		self._keys = [str(n) for n in self._nucleotides]
+
+		for n in self._nucleotides:
+			# make sure our nucleotides don't have their siblings out of bounds
+			# otherwise we can't ensure the validity of our executable encoding
+			# and we also can't verify that translations are made properly
+			# between two encodings
+			if n.sibling() not in self._nucleotides:
+				raise BindingError(n, n+"'s sibling does not exist locally to the encoding!")
+
+			if n.is_transient():
+				# then we have to make sure we don't accidentally have more than
+				# one transient member, otherwise when we do translations,
+				# we won't be able to validate which nucleotides get rotated
+				if not self.has_transient:
+					self.has_transient = True
+				else:
+					raise BindingError(n, "encodings cannot have more than one transient nucleotide")
+
+		if executable:
+			values = [] # define a list container for our output values
+			pairs = [] # define a container for our pairs
+			found = [] # so we don't have repeat pairs
+
+			for n in self._nucleotides:
+				if n not in found:
+					# add pairs to list so we can binary search
+					# NOTE: there will only ever be two
+					pairs.append((str(n), str(n.sibling())))
+
+					# add pair to the found values list
+					found.append(str(n))
+					found.append(str(n.sibling()))
+
+			# then we loop through our keys, because they are both:
+			#	in the alignment we need our output values to be in,
+			#	and they're already in the format we need to check agains
+			for key in self._keys():
+
+				# if our key belongs to the first pair, make it's value zero
+				if key in pairs[0]:
+					values.append(0)
+
+				# if our key is in the second pair, make it's value one
+				if key in pairs[1]:
+					values.append(1)
+
+			# the result is a one way binary encoding
+			self._values = values
+		else:
+			# otherwise it's a storage encoding and we just do linear assignment
+			self._values = [v for v in range(0,4)]
+
+	def __getitem__(self, key):
+		return copy(self._values[self._keys.index(key))) # psudo inhertiance
+
+	def keys(self):
+		# NOTE:
+		# 	don't let someone accidentally modify an internal value
+		# 	because of how variable refferences work in python. :P
+		return copy(self._keys)
+
+	def values(self):
+		return copy(self._values) # quote note above
+
+	def has_transient(self):
+		return copy(self.hastransient) # quote note above
+
+	def is_executable(self):
+		return copy(self.isexecutable) # quote note above
+
+
 
 
 
@@ -290,6 +374,9 @@ def compress_rna(string, encoding=RNAEncoding, flip=False, head=False):
 	raise NotImplementedError()
 
 def decompress_rna(bytes, encoding=RNAEncoding, flip=False, head=False):
+	raise NotImplementedError()
+
+def translate(string, encoding_from, encoding_to):
 	raise NotImplementedError()
 
 def dna2rna(string
