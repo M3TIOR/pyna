@@ -39,27 +39,48 @@ class Nucleotides(Enum):
 
 
 class NucleotideError(Exception):
-	"""
-		Base class for implementing nucleotide errors
-	"""
-	pass
+	""" Base class for implementing nucleotide errors.
 
-class NucleoEncoding(OrderedDict):
+	Attributes:
+		message -- description of the error
+		expression -- the expression where the error occurred.
+	"""
+	def __init__(self, expression, message):
+		self.expression = expression
+		self.message = message
+
+class TranslationError(NucleotideError):
+	""" Exceptions raised durring DNA/Executor or RNA/Storage byte translation.
+
+	Attributes:
+		message -- description of the error
+		previous -- the previously translated nucleotide character
+		nucleotide -- the character value for the targeted translation
+		binding -- the target translation for said nucleotide, otherwise None
+	"""
+	def __init__(self, previous, nucleotide, binding, message):
+		self.previous = previous
+		self.nucleotide = nucleotide
+		self.binding = binding
+		self.message = message
+
+
+class NucleotideEncoding():
 	"""
 		Base class for implementing bitwise nucleotide encodings
 	"""
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
+	def __init__(self, pair1, pair2):
+		self._nucleotides = list(pair1) + list(pair2)
+		self._pairs = [pair1, pair2]
 		if len(self) != 4:
-			raise NucleotideError("Nucleotide encodings must contain four Nucleotides")
-		for v in self.values():
-			if v == None:
-				raise ValueError("Nucleotide values can not be None")
+			raise NucleotideError("Nucleotide encodings must only contain four Nucleotides!", self.items())
+		#if None in self.values():
+		#	raise ValueError("Nucleotide values can not be None!")
 
 
-class DNAEncoding(NucleoEncoding):
+class ExecutorEncoding(NucleotideEncoding):
 	"""
-		Base class for implementing DNA encoding
+		Base class for implementing DNA translation
 	"""
 	# A pairs with G
 	# C pairs with T
@@ -72,7 +93,8 @@ class DNAEncoding(NucleoEncoding):
 	# Needs DNA raw dna comparison to validate.
 	def __init__(self, off={1:"G", 2:"C"}, on={3:"A", 4:"T"}):
 		if len(on) != 2 or len(off) != 2:
-			raise NucleotideError("DNA encodings must have two nucleotides on and off", on, off)
+			raise NucleotideError( on, off,
+				"DNA encodings must have two nucleotides on and off")
 
 		# Make master dictionary to sort through all of our options together
 		all = {}
@@ -97,7 +119,7 @@ class DNAEncoding(NucleoEncoding):
 
 		super().__init__(out)
 
-class RNAEncoding(NucleoEncoding):
+class StorageEncoding(NucleotideEncoding):
 	"""
 		Bitwise encoding for Ribonucleic Acid
 	"""
@@ -206,16 +228,20 @@ def crna2bytes(bytes,
 	"""
 	raise NotImplementedError()
 
-def compress_rna(string, encoding=RNAEncoding):
+def compress_rna(string, encoding=RNAEncoding, flip=False, head=False):
 	raise NotImplementedError()
 
-def decompress_rna(bytes, encoding=RNAEncoding):
+def decompress_rna(bytes, encoding=RNAEncoding, flip=False, head=False):
 	raise NotImplementedError()
 
-def dna2rna(string): # just flop the T to U and vice versa
+def dna2rna(string
+		rna_encoding=RNAEncoding,
+		dna_encoding=DNAEncoding): # just flop the T to U and vice versa
 	raise NotImplementedError()
 
-def rna2dna(string):
+def rna2dna(string,
+		rna_encoding=RNAEncoding,
+		dna_encoding=DNAEncoding):
 	raise NotImplementedError()
 
 if __name__ == "__main__":
