@@ -153,7 +153,11 @@ class BioEncoding():
 			# and we also can't verify that translations are made properly
 			# between two encodings
 			if n.sibling() not in self._nucleotides:
-				raise BindingError(n, n+"'s sibling does not exist locally to the encoding!")
+				# we need to skip single nucleotides with a transient however,
+				# since if we find their transient sibling within the nucleotide
+				# both will be valid anyway.
+				if not n.sibling().is_transient():
+					raise BindingError(n, n+"'s sibling does not exist locally to the encoding!")
 
 			if n.is_transient():
 				# then we have to make sure we don't accidentally have more than
@@ -163,6 +167,10 @@ class BioEncoding():
 					self.has_transient = True
 				else:
 					raise BindingError(n, "encodings cannot have more than one transient nucleotide")
+
+				# Don't forget to rebind the transient's sibling so if it exists
+				# within this encoding, the two will be paired.
+				n.pair(n.sibling(), rebind=True)
 
 		if executable:
 			values = [] # define a list container for our output values
@@ -215,6 +223,7 @@ class BioEncoding():
 
 	def is_executable(self):
 		return copy(self.isexecutable) # quote note above
+
 
 
 
