@@ -64,18 +64,76 @@ class TranslationError(NucleotideError):
 		self.binding = binding
 		self.message = message
 
+class BindingError(NucleotideError):
+	""" Raised when attempting to pair a nucleotide that already has a sibling
+		or when a transient tries to pair itself with another transient"""
+	pass
+
+
+class Nucleotide():
+	"""Nucleotide Type"""
+
+	def __init__(self, name, transient=False):
+		# raise type errors at instanciation and optimize __str__ performance
+		self.char = str(value[0])
+
+		self.name = name # whatever we want the nucleotide represented by
+		self.transient = bool(transient) # the nucleotide that should be swapped
+		self._sibling = None # holder for our sibling refference
+
+	def __str__(self):
+		return str(self.char)
+
+	def pair(self, sibling, rebind=False):
+		if self.transient:
+			# transient nucleotides are exempt from BindingErrors. Since
+			# they can swap places with their other transients, they are
+			# allowed to have the same foster siblings as other transients
+			if sibling.transient:
+				# but two transients cannot be siblings
+				raise BindingError("Two transient nucleotides cannot be siblings.")
+			sibling.pair(self, rebind=True)
+		else:
+			if (sibling.sibling() not None or self._sibling not None) and not rebind:
+				raise BindingError("Nucleotide \""self+"\" already has a sibling.")
+
+			self._sibling = sibling
+			self._sibling._sibling = self
+
+	def sibling(self):
+		return self._sibling
+
+	@staticmethod
+	def siblings(n1, n2, transient=0):
+		""" Creates and returns two sibling nucleotides.
+
+			When transient is set to below zero, the first sibling, n1 is
+			set to be transient, when transient is greater than one,
+			n2 is transient. Otherwise neither sibling will be transient.
+		"""
+		# make two new nucleotides
+		brother = Nucleotide(n1,
+			transient=True if transient < 0 else False
+		)
+		sister = Nucleotide(n2,
+			transient=True if transient > 0 else False
+		)
+		brother.pair(sister) # make the two siblings
+
+		return (brother, sister) # return them
 
 class NucleotideEncoding():
 	"""
 		Base class for implementing bitwise nucleotide encodings
 	"""
-	def __init__(self, pair1, pair2):
-		self._nucleotides = list(pair1) + list(pair2)
-		self._pairs = [pair1, pair2]
-		if len(self) != 4:
-			raise NucleotideError("Nucleotide encodings must only contain four Nucleotides!", self.items())
-		#if None in self.values():
-		#	raise ValueError("Nucleotide values can not be None!")
+	def __init__(self, nv1, nv2, nv3, nv4):
+		self._nucleotides = [tuple[0] for tuple in ordered_list]
+		self._values = [tuple[1] for tuple in ordered_list]
+		self._ordered = OrderedDict([nv1, nv2, nv3, nv4])
+	def __getattr__(self, attr):
+		self.
+	def
+
 
 
 class ExecutorEncoding(NucleotideEncoding):
