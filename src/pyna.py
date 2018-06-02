@@ -137,7 +137,7 @@ class Nucleotide():
 
 		# return a dictionary containing the nucleotides by name
 		return {
-			nucleotide.name:nucleotide for nucleotide in [
+			nucleotide.char:nucleotide for nucleotide in [
 				adenine, cytosine, guanine, uracil, thymine
 			]
 		}
