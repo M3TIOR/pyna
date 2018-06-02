@@ -26,7 +26,7 @@
 #
 #
 
-from enum import Enum
+
 from copy import copy
 
 
@@ -274,28 +274,63 @@ class BioEncoding():
 		return BioEncoding(n["G"],n["C"],n["A"],n["U"], executable=False)
 
 
-# XXX:
-#	DNA cannot be compressed. The mollecule's format simply can't be
-#	interpreted as quadernary; when it's structure, via the existence of
-#	matching base pairs opposite each nucleotide, imply that
-#	that each nucleotide pair instead represents a binary signal, on or off.
-#	Since otherwise, the resulting encoding would be identical to that of its
-#	RNA counterpart. Which wouldn't make any sense. Especially considering that
-#	RNA is only used for transcription and storage with in cells.
-#
-#	So when DNA is being executed / read, having to read both of it's sides
-#	individually would be inefficient. This isn't to say that I think a
-#	rudimentary organism is smart enough to optimize itself, but perhaps to say
-#	that adding redundancy to the most simple form of life seems like overkill.
-#
-# NOTE: this assumes that the input encoding is text left to right
-def exen2bytes(dna, encoding=BioEncoding.DNA(), flip=False, head=False):
+class BioReader():
+	"""
+		A class for decoding nucleotide sequences
+	"""
+
+	def __init__(self, file, encoding, flip=False, head=False):
+		self.file = file
+		self.encoding = encoding
+		self.flip = flip
+		self.head = head
+
+	def write(self, bytes):
+		pass
+
+class BioWriter():
+	"""
+		A class for dispensing encoded nucleotide sequences to files
+	"""
+
+	def __init__(self, file, encoding, flip=False, head=False):
+		self.file = file
+		self.encoding = encoding
+		self.flip = flip
+		self.head = head
+
+def encode(bytes, encoding, flip=False, head=False):
+	"""
+		Converts a binary blob to a string of BioEncoded data.
+	"""
+	if encoding.is_executable():
+		# XXX:
+		#	DNA cannot be decompressed. The mollecule's format simply can't be
+		#	interpreted as quadernary; when it's structure, via the existence of
+		#	matching base pairs opposite each nucleotide, imply that
+		#	that each nucleotide pair instead represents a binary signal, on or off.
+		#	Since otherwise, the resulting encoding would be identical to that of its
+		#	RNA counterpart. Which wouldn't make any sense. Especially considering that
+		#	RNA is only used for transcription and storage with in cells.
+		#
+		#	So when DNA is being executed / read, having to read both of it's sides
+		#	individually would be inefficient. This isn't to say that I think a
+		#	rudimentary organism is smart enough to optimize itself, but perhaps to say
+		#	that adding redundancy to the most simple form of life seems like overkill.
+		#
+		#	Hence the addition of the executable vs storage encoding types
+		#
+		# NOTE:
+		#	this assumes that the input encoding is text left to right
+	pass
+
+def decode(sequence, encoding, flip=False, head=False):
 	"""
 		Converts a string of BioEncoded data to a binary blob.
-
-		By default BioEncoding.DNA is used for the encoding
 	"""
-	dna = dna.upper() # our input dna sequence
+	if not isinstance(encoding, BioEncoding):
+		raise TypeError(encoding, "encoding must be an instance of BioEncoding")
+	dna = sequence.upper() # our input dna sequence
 	obin = bytearray() # our output binary
 	nucleobyte = 0 # our translated byte as an integer value
 
@@ -347,38 +382,17 @@ def exen2bytes(dna, encoding=BioEncoding.DNA(), flip=False, head=False):
 			obin.append(nucleobyte<<offset) # push left with right justification
 
 	except(KeyError):
-		raise TypeError("Broken Nucleotide Sequence: Unrecognized Nucleotide - "+char+" at #"+index)
+		raise TypeError(nucleotide, "Unrecognized Nucleotide - "+nucleotide+" at #"+index)
 
 	return obin
 
 
-def crna2bytes(bytes,
-					rna_encoding=RNAEncoding,
-					dna_encoding=DNAEncoding):
-	"""
-		A more optimal implementation of rna > dna > binary encoding,
-		converting directly from compressed rna to binary.
-	"""
-	raise NotImplementedError()
-
-def compress_rna(string, encoding=RNAEncoding, flip=False, head=False):
-	raise NotImplementedError()
-
-def decompress_rna(bytes, encoding=RNAEncoding, flip=False, head=False):
-	raise NotImplementedError()
-
 def translate(string, encoding_from, encoding_to):
+	"""
+		translates an encoded from one BioEncoding to another
+	"""
 	raise NotImplementedError()
 
-def dna2rna(string
-		rna_encoding=RNAEncoding,
-		dna_encoding=DNAEncoding): # just flop the T to U and vice versa
-	raise NotImplementedError()
-
-def rna2dna(string,
-		rna_encoding=RNAEncoding,
-		dna_encoding=DNAEncoding):
-	raise NotImplementedError()
 
 if __name__ == "__main__":
 	import argparse
