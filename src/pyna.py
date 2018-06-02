@@ -244,82 +244,34 @@ class BioEncoding():
 
 	@staticmethod
 	def DNA():
+		"""
+			Base class for implementing DNA translation
+		"""
+		# A pairs with G
+		# C pairs with T
+		#
+		# so the resulting encoding, when compensating for
+		# base pair compression looks like this.
+		#
+		# Well, that or it's inverse G & C == 1, A && T == 0
+		#
+		# Needs DNA raw dna comparison to validate.
 		n = Nucleotide.standard()
 		return BioEncoding(n["G"],n["C"],n["A"],n["T"], executable=True)
 
 	@staticmethod
 	def RNA():
+		"""
+			Bitwise encoding for Ribonucleic Acid
+		"""
+		# There are a lot of combonation here. Which realistically should all be
+		# tested against an actual rna sample from a living cell.
+		#
+		# However, if my hypothesis about DNA being bytecode is correct; this
+		# shouldn't matter, as it would just need to be a constant medium for
+		# storing the nucleotide sequence in a more compact form factor.
 		n = Nucleotide.standard()
 		return BioEncoding(n["G"],n["C"],n["A"],n["U"], executable=False)
-
-
-
-
-
-
-
-class ExecutorEncoding(NucleotideEncoding):
-	"""
-		Base class for implementing DNA translation
-	"""
-	# A pairs with G
-	# C pairs with T
-	#
-	# so the resulting encoding, when compensating for
-	# base pair compression looks like this.
-	#
-	# Well, that or it's inverse G & C == 1, A && T == 0
-	#
-	# Needs DNA raw dna comparison to validate.
-	def __init__(self, off={1:"G", 2:"C"}, on={3:"A", 4:"T"}):
-		if len(on) != 2 or len(off) != 2:
-			raise NucleotideError( on, off,
-				"DNA encodings must have two nucleotides on and off")
-
-		# Make master dictionary to sort through all of our options together
-		all = {}
-		out = [] # our output dictionary in list form for OrderedDict
-
-		# add both of our lists to the master
-		all.update(off)
-		all.update(on)
-
-		# NOTE:
-		#	This will sort all our options by key, which will align
-		#	our values how they need to be, then we can add the values
-		# 	into our output list. If there are any redundant nucleotide keys,
-		#	they will be discarded once passed to super.__init__
-		for key, value in sorted(all.items(), key=lambda t: t[0]):
-			# if our value will be zero, output pair
-			if value in off.values():
-				out.append((value, 0))
-			# if our value will be one, output pair
-			if value in on.values():
-				out.append((value, 1))
-
-		super().__init__(out)
-
-class StorageEncoding(NucleotideEncoding):
-	"""
-		Bitwise encoding for Ribonucleic Acid
-	"""
-	# There are a lot of combonation here. Which realistically should all be
-	# tested against an actual rna sample from a living cell.
-	#
-	# However, if my hypothesis about DNA being bytecode is correct; this
-	# shouldn't matter, as it would just need to be a constant medium for
-	# storing the nucleotide sequence in a more compact form factor.
-	def __init__(self):
-		super().__init__({
-			"G": 0,
-			"C": 1,
-			"A": 2,
-			"U": 3,
-		})
-
-
-#DNA = ['g','c','a','t']
-#RNA = ['g','c','a','u']
 
 
 # XXX:
