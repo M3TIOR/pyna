@@ -135,6 +135,13 @@ class Nucleotide():
 		# guanine only pairs with cytosine
 		guanine.pair(cytosine)
 
+		# return a dictionary containing the nucleotides by name
+		return {
+			nucleotide.name:nucleotide for nucleotide in [
+				adenine, cytosine, guanine, uracil, thymine
+			]
+		}
+
 
 
 class BioEncoding():
