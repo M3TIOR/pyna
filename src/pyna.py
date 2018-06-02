@@ -242,6 +242,17 @@ class BioEncoding():
 	def is_executable(self):
 		return copy(self.isexecutable) # quote note above
 
+	@staticmethod
+	def DNA():
+		n = Nucleotide.standard()
+		return BioEncoding(n["G"],n["C"],n["A"],n["T"], executable=True)
+
+	@staticmethod
+	def RNA():
+		n = Nucleotide.standard()
+		return BioEncoding(n["G"],n["C"],n["A"],n["U"], executable=False)
+
+
 
 
 
