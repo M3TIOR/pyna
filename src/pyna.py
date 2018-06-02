@@ -29,14 +29,6 @@
 from enum import Enum
 from copy import copy
 
-class Nucleotides(Enum):
-	# NOTE: may remove, IDK why I have this here
-	Adenine = 'A'
-	Cytosine = 'C'
-	Guanine = 'G'
-	Uracil = 'U'
-	Thymine = 'T'
-
 
 class NucleotideError(Exception):
 	""" Base class for implementing nucleotide errors.
@@ -124,6 +116,25 @@ class Nucleotide():
 		brother.pair(sister) # make the two siblings
 
 		return (brother, sister) # return them
+
+	@staticmethod
+ 	def standard():
+		"""
+			Group of standard nuclotides with their pairs in DNA/RNA
+		"""
+		adenine = Nucleotide("Adenine")
+		cytosine = Nucleotide("Cytosine")
+		guanine = Nucleotide("Guanine")
+		uracil = Nucleotide("Uracil")
+		thymine = Nucleotide("Thymine", transient=True)
+
+		# uracil and thymine are both transient and bound to adenine
+		uracil.pair(adenine)
+		thymine.pair(adenine)
+
+		# guanine only pairs with cytosine
+		guanine.pair(cytosine)
+
 
 
 class BioEncoding():
