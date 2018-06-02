@@ -29,9 +29,8 @@
 
 from copy import copy
 
-
-class NucleotideError(Exception):
-	""" Base class for implementing nucleotide errors.
+class Error(Exception):
+	"""Base class for implementing errors in this library
 
 	Attributes:
 		message -- description of the error
@@ -41,8 +40,40 @@ class NucleotideError(Exception):
 		self.expression = expression
 		self.message = message
 
-class TranslationError(NucleotideError):
-	""" Exceptions raised durring DNA/Executor or RNA/Storage byte translation.
+class NucleotideError(Error):
+	""" Errors that arise because of conflicts with Nucleotides """
+	pass
+
+class BindingError(NucleotideError):
+	""" Raised when attempting to pair a nucleotide that already has a sibling
+		or when a transient tries to pair itself with another transient"""
+	pass
+
+class BioEncodingError():
+	""" Errors raised from problems with BioEncodings """
+	pass
+
+class ExecutableError(BioEncodingError):
+	""" An error that is raised when attempting to encode with an executable BioEncoding"""
+	# XXX:
+	#	DNA cannot be encoded. The mollecule's format simply can't be
+	#	interpreted as quadernary; when it's structure, via the existence of
+	#	matching base pairs opposite each nucleotide, imply that
+	#	that each nucleotide pair instead represents a binary signal, on or off.
+	#	Since otherwise, the resulting encoding would be identical to that of its
+	#	RNA counterpart. Which wouldn't make any sense. Especially considering that
+	#	RNA is only used for transcription and storage with in cells.
+	#
+	#	So when DNA is being executed / read, having to read both of it's sides
+	#	individually would be inefficient. This isn't to say that I think a
+	#	rudimentary organism is smart enough to optimize itself, but perhaps to say
+	#	that adding redundancy to the most simple form of life seems like overkill.
+	#
+	#	Hence the addition of the executable vs storage encoding types
+	pass
+
+class TranslationError(BioEncodingError):
+	""" Exceptions raised durring BioEncoder translation.
 
 	Attributes:
 		message -- description of the error
@@ -50,16 +81,12 @@ class TranslationError(NucleotideError):
 		nucleotide -- the character value for the targeted translation
 		binding -- the target translation for said nucleotide, otherwise None
 	"""
-	def __init__(self, previous, nucleotide, binding, message):
+	def __init__(self, previous, next, binding, message):
 		self.previous = previous
-		self.nucleotide = nucleotide
+		self.next = next
 		self.binding = binding
 		self.message = message
 
-class BindingError(NucleotideError):
-	""" Raised when attempting to pair a nucleotide that already has a sibling
-		or when a transient tries to pair itself with another transient"""
-	pass
 
 
 class Nucleotide():
@@ -175,7 +202,7 @@ class BioEncoding():
 				# since if we find their transient sibling within the nucleotide
 				# both will be valid anyway.
 				if not n.sibling().is_transient():
-					raise BindingError(n, n+"'s sibling does not exist locally to the encoding!")
+					raise BindingError(n, "sibling does not exist locally to the encoding!")
 
 			if n.is_transient():
 				# then we have to make sure we don't accidentally have more than
@@ -304,25 +331,10 @@ def encode(bytes, encoding, flip=False, head=False):
 		Converts a binary blob to a string of BioEncoded data.
 	"""
 	if encoding.is_executable():
-		# XXX:
-		#	DNA cannot be decompressed. The mollecule's format simply can't be
-		#	interpreted as quadernary; when it's structure, via the existence of
-		#	matching base pairs opposite each nucleotide, imply that
-		#	that each nucleotide pair instead represents a binary signal, on or off.
-		#	Since otherwise, the resulting encoding would be identical to that of its
-		#	RNA counterpart. Which wouldn't make any sense. Especially considering that
-		#	RNA is only used for transcription and storage with in cells.
-		#
-		#	So when DNA is being executed / read, having to read both of it's sides
-		#	individually would be inefficient. This isn't to say that I think a
-		#	rudimentary organism is smart enough to optimize itself, but perhaps to say
-		#	that adding redundancy to the most simple form of life seems like overkill.
-		#
-		#	Hence the addition of the executable vs storage encoding types
-		#
-		# NOTE:
-		#	this assumes that the input encoding is text left to right
-	pass
+		raise ExecutableError(encoding, "executable encodings cannot be encoded")
+
+
+	raise NotImplementedError()
 
 def decode(sequence, encoding, flip=False, head=False):
 	"""
