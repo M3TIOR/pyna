@@ -289,11 +289,12 @@ class BioEncoding():
 #	that adding redundancy to the most simple form of life seems like overkill.
 #
 # NOTE: this assumes that the input encoding is text left to right
-def dna2bytes(dna, encoding=DNAEncoding(), flip=False, head=False):
+def exen2bytes(dna, encoding=BioEncoding.DNA(), flip=False, head=False):
 	"""
-		Converts a string of encoded dna to a binary blob.
+		Converts a string of BioEncoded data to a binary blob.
+
+		By default BioEncoding.DNA is used for the encoding
 	"""
-	map = encoding # rebinding of enum to dictionary for easy ref
 	dna = dna.upper() # our input dna sequence
 	obin = bytearray() # our output binary
 	nucleobyte = 0 # our translated byte as an integer value
@@ -332,7 +333,7 @@ def dna2bytes(dna, encoding=DNAEncoding(), flip=False, head=False):
 			nucleotide = dna[ direction * index ]
 
 			nucleobyte <<= 1 # move stored bits left 1
-			nucleobyte |= int(map[nucleotide]) # append next bit to the right
+			nucleobyte |= int(encoding[nucleotide]) # append next bit to the right
 
 			if (index+inset) % 8 == 7: # if we've just mapped the last bit in a byte
 				obin.append(nucleobyte) # append byte to the right of or output
