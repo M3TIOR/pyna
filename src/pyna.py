@@ -128,7 +128,7 @@ class Nucleotide():
 		return self._transient
 
 	@staticmethod
-	def siblings(n1, n2, transient=0):
+	def couple(n1, n2, transient=0):
 		""" Creates and returns two sibling nucleotides.
 
 			When transient is set to below zero, the first sibling, n1 is
