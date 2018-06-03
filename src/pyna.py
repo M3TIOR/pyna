@@ -176,12 +176,13 @@ class BioEncoding():
 		Base class for implementing bitwise nucleotide encodings
 	"""
 
-	def __init__(self, n1, n2, n3, n4, executable=False):
+	def __init__(self, n1, n2, n3, n4, standby=None, executable=False):
 		# positional args enforce strictness
 
 		# encodings don't need a transient
-		self._hastransient = False # but if we have one, there must only be one.
+		self._hastransient = -1 # but if we have one, there must only be one.
 		self._isexecutable = executable # toggle storage vs executable encoding
+		self._swap= ( None if not isinstance(standby, BioEncoding) else standby)
 
 		# NOTE:
 		#	Make a copy of the input variables instead of using them
@@ -209,7 +210,7 @@ class BioEncoding():
 				# one transient member, otherwise when we do translations,
 				# we won't be able to validate which nucleotides get rotated
 				if not self.has_transient:
-					self.has_transient = True
+					self.has_transient = self._nucleotides.index(n)
 				else:
 					raise BindingError(n, "encodings cannot have more than one transient nucleotide")
 
@@ -217,7 +218,14 @@ class BioEncoding():
 				# within this encoding, the two will be paired.
 				n.pair(n.sibling(), rebind=True)
 
-		if executable:
+			# then bind the values of our nucleotides
+			self._set_type()
+
+	def __getitem__(self, key):
+		return copy(self._values[self._keys.index(key))) # psudo inhertiance
+
+	def _set_type():
+		if self.isexecutable:
 			values = [] # define a list container for our output values
 			pairs = [] # define a container for our pairs
 			found = [] # so we don't have repeat pairs
@@ -251,23 +259,46 @@ class BioEncoding():
 			# otherwise it's a storage encoding and we just do linear assignment
 			self._values = [v for v in range(0,4)]
 
-	def __getitem__(self, key):
-		return copy(self._values[self._keys.index(key))) # psudo inhertiance
-
 	def keys(self):
-		# NOTE:
+		# XXX:
 		# 	don't let someone accidentally modify an internal value
 		# 	because of how variable refferences work in python. :P
 		return copy(self._keys)
 
 	def values(self):
-		return copy(self._values) # quote note above
+		return copy(self._values) # quote XXX note above
 
-	def has_transient(self):
-		return copy(self.hastransient) # quote note above
+	def switch(self, silent=False):
+		if self.can_change_type:
+			# change type signature
+			self._isexecutable = not self._isexecutable
+
+			# rotate last transient out and swap it with our standby
+			last = self._swap
+			self._swap = self._nucleotides[self._hastransient]
+			self._nucleotides[self._hastransient] = last
+
+			# rebind the swapped key
+			self._keys[self._keys.index(self.last.char)] = self._swap.char
+
+			# change over the values
+			self._set_type()
+
+			# completed successfully
+			return True
+		elif not silent:
+			return False
+		else:
+			raise BioEncodingError(self, "can't switch type without a transient to swap")
+
+	def can_change_type(self):
+		return ( True if self._hastransient > -1 and self.swap else False )
 
 	def is_executable(self):
-		return copy(self.isexecutable) # quote note above
+		return copy(self._isexecutable) # quote XXX note above
+
+	def is_storage(self):
+		return not self._isexecutable
 
 	@staticmethod
 	def DNA():
@@ -284,21 +315,31 @@ class BioEncoding():
 		#
 		# Needs DNA raw dna comparison to validate.
 		n = Nucleotide.standard()
-		return BioEncoding(n["G"],n["C"],n["A"],n["T"], executable=True)
+		return BioEncoding(
+			n["G"],n["C"],n["A"],n["T"],
+
+			swap=n["U"],
+			executable=True
+		)
 
 	@staticmethod
 	def RNA():
 		"""
 			Bitwise encoding for Ribonucleic Acid
 		"""
-		# There are a lot of combonation here. Which realistically should all be
+		# There are a lot of combonations here. Which realistically should all be
 		# tested against an actual rna sample from a living cell.
 		#
 		# However, if my hypothesis about DNA being bytecode is correct; this
 		# shouldn't matter, as it would just need to be a constant medium for
 		# storing the nucleotide sequence in a more compact form factor.
 		n = Nucleotide.standard()
-		return BioEncoding(n["G"],n["C"],n["A"],n["U"], executable=False)
+		return BioEncoding(
+			n["G"],n["C"],n["A"],n["U"],
+
+			swap=n["T"],
+			executable=False
+		)
 
 
 class BioReader():
@@ -342,9 +383,11 @@ def decode(sequence, encoding, flip=False, head=False):
 	"""
 	if not isinstance(encoding, BioEncoding):
 		raise TypeError(encoding, "encoding must be an instance of BioEncoding")
-	dna = sequence.upper() # our input dna sequence
+	code = sequence.upper() # our input dna sequence
 	obin = bytearray() # our output binary
-	nucleobyte = 0 # our translated byte as an integer value
+	nucleobyte = 0 # each translated byte as an integer value
+	chunk_size = 1 if encoding.is_executable() else 2
+	chunks = 8 // chunk_size
 
 	try:
 		# Do if and try top level so they aren't being run every iteration
@@ -352,7 +395,7 @@ def decode(sequence, encoding, flip=False, head=False):
 
 		index = 0 				# index counter for byte rollover
 		length = len(dna)		# get the length of our dna, cap read distance
-		offset = 8-(length % 8)	# the amount of bits that remain to be filled
+		offset = chunks-( length % chunks )	# the amount of bits that remain to be filled
 		inset = 0				# the amount of empty bits left before beginning transcription
 
 		# To flip the binary translation we just use the product of a positive
@@ -364,7 +407,7 @@ def decode(sequence, encoding, flip=False, head=False):
 			# compensate for negative memory justification
 			length += 1
 			index += 1
-			inset -= 1
+			inset -= chunk_size
 		else:
 			direction = 1
 
@@ -377,12 +420,13 @@ def decode(sequence, encoding, flip=False, head=False):
 		while (index < length):
 
 			# get nucleotide out of dna sequence
-			nucleotide = dna[ direction * index ]
+			nucleotide = code[ direction * index ]
 
-			nucleobyte <<= 1 # move stored bits left 1
+			nucleobyte <<= chunk_size # move stored bits left by the chunk size
 			nucleobyte |= int(encoding[nucleotide]) # append next bit to the right
 
-			if (index+inset) % 8 == 7: # if we've just mapped the last bit in a byte
+			if (index*chunk_size+inset) % chunks == chunks - 1:
+				# if we've just mapped the last bit in a byte
 				obin.append(nucleobyte) # append byte to the right of or output
 				nucleobyte = 0 # reset stored byte value to zero
 
@@ -399,9 +443,15 @@ def decode(sequence, encoding, flip=False, head=False):
 	return obin
 
 
-def translate(string, encoding_from, encoding_to):
+def translate_encoding(string, encoding_from, encoding_to):
 	"""
-		translates an encoded from one BioEncoding to another
+		translates an encoded string from one BioEncoding to another
+	"""
+	raise NotImplementedError()
+
+def translate_binary(bytes, encoding_from, encoding_to):
+	"""
+		translates a binary blob from one BioEncoding to another
 	"""
 	raise NotImplementedError()
 
