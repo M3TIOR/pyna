@@ -385,7 +385,11 @@ def decode(sequence, encoding, flip=False, head=False):
 	"""
 	if not isinstance(encoding, BioEncoding):
 		raise TypeError(encoding, "encoding must be an instance of BioEncoding")
-	code = str(sequence).upper() # our input dna sequence
+	if isinstance(sequence, bytes):
+		sequence = str(sequence, encoding="utf-8")
+	elif not isinstance(sequence, str):
+		sequence = str(sequence)
+	code = sequence.upper() # our input dna sequence
 	obin = bytearray() # our output binary
 	nucleobyte = 0 # each translated byte as an integer value
 	chunk_size = 1 if encoding.is_executable() else 2
