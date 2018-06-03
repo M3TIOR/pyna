@@ -445,18 +445,29 @@ def decode(sequence, encoding, flip=False, head=False):
 	return obin
 
 
-def translate_encoding(string, encoding_from, encoding_to):
+def compliment_string(string, encoding):
+	"""
+		returns the inverse complement of the input string with BioEncoding
+	"""
+	raise NotImplementedError()
+
+def compliment_binary(bytes, encoding, flip=False, head=False):
+	"""
+		returns the inverse complement of the input binary with BioEncoding
+	"""
+	raise NotImplementedError()
+
+def translate_string(string, encoding_from, encoding_to):
 	"""
 		translates an encoded string from one BioEncoding to another
 	"""
 	raise NotImplementedError()
 
-def translate_binary(bytes, encoding_from, encoding_to):
+def translate_binary(bytes, encoding_from, encoding_to, flip=False, head=False):
 	"""
 		translates a binary blob from one BioEncoding to another
 	"""
 	raise NotImplementedError()
-
 
 if __name__ == "__main__":
 	import argparse
