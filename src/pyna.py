@@ -29,6 +29,8 @@
 
 from copy import copy
 
+version = "0.0.1" # main,beta,alpha-hotfix
+
 class Error(Exception):
 	"""Base class for implementing errors in this library
 
