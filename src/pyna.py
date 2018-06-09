@@ -273,6 +273,16 @@ class BioEncoding():
 	def values(self):
 		return copy(self._values) # quote XXX note above
 
+	def compliment(self):
+		# get the nucleotide corresponding to "key" and get it's siblings key
+		return {
+			self._nucleotides[self._keys.index(key)]._sibling.char:
+			self[self._nucleotides[self._keys.index(key)]._sibling.char]
+			for key in self._keys()
+		}
+
+	def compliment_value(self, key):
+
 	def switch(self, silent=False, allow_no_swap=False):
 		if self.can_change_type() or (
 					True if allow_no_swap and self._swap == None else False):
@@ -460,7 +470,12 @@ def compliment_string(string, encoding):
 	"""
 		returns the inverse complement of the input string with BioEncoding
 	"""
-	raise NotImplementedError()
+	from = encoding.keys()
+	to = encoding.compliment().keys()
+	output = ""
+	for char in string:
+		output += to[from.index(char)]
+	return output
 
 def compliment_binary(bytes, encoding, flip=False, head=False):
 	"""
