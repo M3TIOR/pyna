@@ -192,7 +192,7 @@ class BioEncoding():
 		#	bioencodings with the same nucleotides.
 		#
 		#	This is also a read only data structure
-		self._nucleotides = copy([n1, n2, n3, n4]) # carry out strict indexing
+		self._nucleotides = [n1, n2, n3, n4] # carry out strict indexing
 		self._keys = [str(n) for n in self._nucleotides]
 
 		for n in self._nucleotides:
@@ -270,18 +270,22 @@ class BioEncoding():
 	def values(self):
 		return copy(self._values) # quote XXX note above
 
-	def switch(self, silent=False):
-		if self.can_change_type:
+	def switch(self, silent=False, allow_no_swap=False):
+		if self.can_change_type() and (
+					True if allow_no_swap and self._swap == None else False):
 			# change type signature
 			self._isexecutable = not self._isexecutable
 
 			# rotate last transient out and swap it with our standby
-			last = self._swap
+			next = self._swap
 			self._swap = self._nucleotides[self._hastransient]
-			self._nucleotides[self._hastransient] = last
+			self._nucleotides[self._hastransient] = next
 
-			# rebind the swapped key
-			self._keys[self._keys.index(self.last.char)] = self._swap.char
+			# don't forget to rebind our swapped sibling
+			next.sibling().pair(next)
+
+			# change over the swapped key
+			self._keys[self._keys.index(self._swap.char)] = next.char
 
 			# change over the values
 			self._set_type()
@@ -291,10 +295,10 @@ class BioEncoding():
 		elif not silent:
 			return False
 		else:
-			raise BioEncodingError(self, "can't switch type without a transient to swap")
+			raise BioEncodingError(self, "can't switch type without a transient and swap")
 
 	def can_change_type(self):
-		return ( True if self._hastransient > -1 and self.swap else False )
+		return ( True if self._transient > -1 and self.swap else False )
 
 	def is_executable(self):
 		return copy(self._isexecutable) # quote XXX note above
