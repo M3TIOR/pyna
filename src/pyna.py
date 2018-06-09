@@ -271,7 +271,7 @@ class BioEncoding():
 		return copy(self._values) # quote XXX note above
 
 	def switch(self, silent=False, allow_no_swap=False):
-		if self.can_change_type() and (
+		if self.can_change_type() or (
 					True if allow_no_swap and self._swap == None else False):
 			# change type signature
 			self._isexecutable = not self._isexecutable
