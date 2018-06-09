@@ -64,7 +64,10 @@ class ExecutableError(BioEncodingError):
 	#	that each nucleotide pair instead represents a binary signal, on or off.
 	#	Since otherwise, the resulting encoding would be identical to that of its
 	#	RNA counterpart. Which wouldn't make any sense. Especially considering that
-	#	RNA is only used for transcription and storage with in cells.
+	#	RNA is only used for transcription and storage with in cells
+	#
+	#	I could have the functions of DNA and RNA backwards, but for now, this is
+	#	the hypothesis I'm running with.
 	#
 	#	So when DNA is being executed / read, having to read both of it's sides
 	#	individually would be inefficient. This isn't to say that I think a
