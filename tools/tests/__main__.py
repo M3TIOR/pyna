@@ -7,30 +7,36 @@
 
 # import unittest and test modules
 import unittest
-import tests.dna2bytes as dna2bytes
-import tests.dnaencoding as dnaencoding
+from .decode import decode
+from .bioencoding import bioencoding
+from .nucleotide import nucleotide
 
 
 if __name__ == "__main__":
 	runner = unittest.TextTestRunner(verbosity=2)
 
-	dna2bytes_tests = unittest.TestSuite(tests=(
-		dna2bytes.DNA2Bytes('test_tail_static'),
-		dna2bytes.DNA2Bytes('test_head_static'),
-		dna2bytes.DNA2Bytes('test_flipTail_static'),
-		dna2bytes.DNA2Bytes('test_flipHead_static')
-	))
-
-	dnaencoding_tests = unittest.TestSuite(tests=(
-		dnaencoding.DNAEncoding('test_new_instance'),
-		dnaencoding.DNAEncoding('test_rebinding'),
-		dnaencoding.DNAEncoding('test_wrong_keycount_rebinding'),
-		dnaencoding.DNAEncoding('test_redundant_index_rebinding')
-	))
-
 	pyna = unittest.TestSuite(tests=(
-		dna2bytes_tests,
-		dnaencoding_tests,
+		unittest.TestSuite(tests=(
+			decode('test_executable_tail_static'),
+			decode('test_executable_head_static'),
+			decode('test_executable_flipTail_static'),
+			decode('test_executable_flipHead_static'),
+			decode('test_storage_tail_static'),
+			decode('test_storage_head_static'),
+			decode('test_storage_flipTail_static'),
+			decode('test_storage_flipHead_static')
+		)),
+		unittest.TestSuite(tests=(
+			bioencoding('test_keys'),
+			bioencoding('test_values'),
+			bioencoding('test_dict'),
+			bioencoding('test_switch')
+		)),
+		unittest.TestSuite(tests=(
+			nucleotide('test_instance'),
+			nucleotide('test_pair'),
+			nucleotide('test_couple')
+		))
 	))
 
 	# Run all test modules!

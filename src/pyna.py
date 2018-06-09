@@ -281,8 +281,6 @@ class BioEncoding():
 			for key in self._keys()
 		}
 
-	def compliment_value(self, key):
-
 	def switch(self, silent=False, allow_no_swap=False):
 		if self.can_change_type() or (
 					True if allow_no_swap and self._swap == None else False):

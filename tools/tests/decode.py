@@ -19,14 +19,17 @@ import unittest
 import random
 import pyna
 
-class DNA2Bytes(unittest.TestCase):
+class decode(unittest.TestCase):
 
 	def setUp(self):
-		self.static_strand = "ATCGATATGCATAGTACATAG"
-		self.random_strand = "" #TODO implement more variable test cases
+		self.dna_encoding = pyna.BioEncoding.DNA()
+		self.rna_encoding = pyna.BioEncoding.RNA()
+		self.static_dna_strand = "ATCGATATGCATAGTACATAG"
+		self.static_rna_strand = "UAUGCUAAACGUAGGAUAGUGA"
+		self.random_dna_strand = "" #TODO implement more variable test cases
 
-	def test_tail_static(self):
-		binary = pyna.dna2bytes( self.static_strand )
+	def test_executable_tail_static(self):
+		binary = pyna.decode( self.static_dna_strand, self.dna_encoding)
 		self.assertEqual( bin(binary),
 			[
 				"11001111",
@@ -35,8 +38,8 @@ class DNA2Bytes(unittest.TestCase):
 			]
 		)
 
-	def test_head_static(self):
-		binary = pyna.dna2bytes( self.static_strand, head=True )
+	def test_executable_head_static(self):
+		binary = pyna.decode( self.static_dna_strand, self.dna_encoding, head=True )
 		self.assertEqual( bin(binary),
 			[
 				"00011001",
@@ -45,8 +48,8 @@ class DNA2Bytes(unittest.TestCase):
 			]
 		)
 
-	def test_flipTail_static(self):
-		binary = pyna.dna2bytes( self.static_strand, flip=True )
+	def test_executable_flipTail_static(self):
+		binary = pyna.decode( self.static_dna_strand, self.dna_encoding, flip=True )
 		self.assertEqual( bin(binary),
 			[	"01110110",
 				"11100111",
@@ -54,8 +57,8 @@ class DNA2Bytes(unittest.TestCase):
 			]
 		)
 
-	def test_flipHead_static(self):
-		binary = pyna.dna2bytes( self.static_strand, flip=True, head=True )
+	def test_executable_flipHead_static(self):
+		binary = pyna.decode( self.static_dna_strand, self.dna_encoding, flip=True, head=True )
 		self.assertEqual( bin(binary),
 			[
 				"00001110",
@@ -63,6 +66,8 @@ class DNA2Bytes(unittest.TestCase):
 				"11110011"
 			]
 		)
+	def test_storage_tail_static(self):
+		binary = byna.decode( self.static_rna_strand, self.rna_encoding, flip=True)
 
 if __name__ == "__main__":
 	unittest.main(verbosity=2)
