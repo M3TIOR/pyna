@@ -51,7 +51,7 @@ class BindingError(NucleotideError):
 		or when a transient tries to pair itself with another transient"""
 	pass
 
-class BioEncodingError():
+class BioEncodingError(Error):
 	""" Errors raised from problems with BioEncodings """
 	pass
 
@@ -99,7 +99,7 @@ class Nucleotide():
 
 	def __init__(self, name, transient=False):
 		# raise type errors at instanciation and optimize __str__ performance
-		self.char = str(value[0])
+		self.char = str(name[0])
 
 		self.name = name # whatever we want the nucleotide represented by
 		self._transient = bool(transient) # the nucleotide that should be swapped
@@ -118,8 +118,8 @@ class Nucleotide():
 				raise BindingError(sibling, "Two transient nucleotides cannot be siblings.")
 			sibling.pair(self, rebind=True)
 		else:
-			if (sibling.sibling() not None or self._sibling not None) and not rebind:
-				raise BindingError(self.pair, "Nucleotide \""self+"\" already has a sibling.")
+			if (sibling.sibling() != None or self._sibling != None) and not rebind:
+				raise BindingError(self.pair, "Nucleotide \""+str(self)+"\" already has a sibling.")
 
 			self._sibling = sibling
 			self._sibling._sibling = self
@@ -150,7 +150,7 @@ class Nucleotide():
 		return (brother, sister) # return them
 
 	@staticmethod
- 	def standard():
+	def standard():
 		"""
 			Group of standard nuclotides with their pairs in DNA/RNA
 		"""
@@ -187,7 +187,7 @@ class BioEncoding():
 		# encodings don't need a transient
 		self._hastransient = -1 # but if we have one, there must only be one.
 		self._isexecutable = executable # toggle storage vs executable encoding
-		self._swap= ( None if not isinstance(standby, BioEncoding) else standby)
+		self._swap= ( standby if isinstance(standby, Nucleotide) else None )
 
 		# NOTE:
 		#	Make a copy of the input variables instead of using them
@@ -196,7 +196,6 @@ class BioEncoding():
 		#
 		#	This is also a read only data structure
 		self._nucleotides = [n1, n2, n3, n4] # carry out strict indexing
-		self._keys = [str(n) for n in self._nucleotides]
 
 		for n in self._nucleotides:
 			# make sure our nucleotides don't have their siblings out of bounds
@@ -214,23 +213,23 @@ class BioEncoding():
 				# then we have to make sure we don't accidentally have more than
 				# one transient member, otherwise when we do translations,
 				# we won't be able to validate which nucleotides get rotated
-				if not self.has_transient:
-					self.has_transient = self._nucleotides.index(n)
+				if self._hastransient < 1:
+					self._hastransient = self._nucleotides.index(n)
 				else:
 					raise BindingError(n, "encodings cannot have more than one transient nucleotide")
 
 				# Don't forget to rebind the transient's sibling so if it exists
 				# within this encoding, the two will be paired.
-				n.pair(n.sibling(), rebind=True)
+				n.sibling().pair(n, rebind=True)
 
 			# then bind the values of our nucleotides
 			self._set_type()
 
 	def __getitem__(self, key):
-		return copy(self._values[self._keys.index(key))) # psudo inhertiance
+		return self._values[self.keys().index(key)] # psudo inhertiance
 
-	def _set_type():
-		if self.isexecutable:
+	def _set_type(self):
+		if self._isexecutable:
 			values = [] # define a list container for our output values
 			pairs = [] # define a container for our pairs
 			found = [] # so we don't have repeat pairs
@@ -239,7 +238,7 @@ class BioEncoding():
 				if n not in found:
 					# add pairs to list so we can binary search
 					# NOTE: there will only ever be two
-					pairs.append((str(n), str(n.sibling())))
+					pairs.append([str(n), str(n.sibling())])
 
 					# add pair to the found values list
 					found.append(str(n))
@@ -248,14 +247,13 @@ class BioEncoding():
 			# then we loop through our keys, because they are both:
 			#	in the alignment we need our output values to be in,
 			#	and they're already in the format we need to check agains
-			for key in self._keys():
+			for key in self.keys():
 
 				# if our key belongs to the first pair, make it's value zero
 				if key in pairs[0]:
 					values.append(0)
-
-				# if our key is in the second pair, make it's value one
-				if key in pairs[1]:
+				else:
+					# if our key is in the second pair, make it's value one
 					values.append(1)
 
 			# the result is a one way binary encoding
@@ -268,10 +266,10 @@ class BioEncoding():
 		# XXX:
 		# 	don't let someone accidentally modify an internal value
 		# 	because of how variable refferences work in python. :P
-		return copy(self._keys)
+		return [str(n) for n in self._nucleotides]
 
 	def values(self):
-		return copy(self._values) # quote XXX note above
+		return self._values # quote XXX note above
 
 	def compliment(self):
 		# get the nucleotide corresponding to "key" and get it's siblings key
@@ -293,23 +291,20 @@ class BioEncoding():
 			self._nucleotides[self._hastransient] = next
 
 			# don't forget to rebind our swapped sibling
-			next.sibling().pair(next)
-
-			# change over the swapped key
-			self._keys[self._keys.index(self._swap.char)] = next.char
+			next.pair(self._swap.sibling())
 
 			# change over the values
 			self._set_type()
 
 			# completed successfully
 			return True
-		elif not silent:
+		elif silent:
 			return False
 		else:
 			raise BioEncodingError(self, "can't switch type without a transient and swap")
 
 	def can_change_type(self):
-		return ( True if self._transient > -1 and self.swap else False )
+		return ( True if self._hastransient > -1 and self._swap else False )
 
 	def is_executable(self):
 		return copy(self._isexecutable) # quote XXX note above
@@ -335,7 +330,7 @@ class BioEncoding():
 		return BioEncoding(
 			n["G"],n["C"],n["A"],n["T"],
 
-			swap=n["U"],
+			standby=n["U"],
 			executable=True
 		)
 
@@ -354,7 +349,7 @@ class BioEncoding():
 		return BioEncoding(
 			n["G"],n["C"],n["A"],n["U"],
 
-			swap=n["T"],
+			standby=n["T"],
 			executable=False
 		)
 
@@ -415,7 +410,7 @@ def decode(sequence, encoding, flip=False, head=False):
 		# of the loop. Which would be inefficient.
 
 		index = 0 				# index counter for byte rollover
-		length = len(dna)		# get the length of our dna, cap read distance
+		length = len(code)		# get the length of our dna, cap read distance
 		offset = chunks-( length % chunks )	# the amount of bits that remain to be filled
 		inset = 0				# the amount of empty bits left before beginning transcription
 
@@ -459,7 +454,7 @@ def decode(sequence, encoding, flip=False, head=False):
 			obin.append(nucleobyte<<offset) # push left with right justification
 
 	except(KeyError):
-		raise TypeError(nucleotide, "Unrecognized Nucleotide - "+nucleotide+" at #"+index)
+		raise NucleotideError(nucleotide, "Unrecognized Nucleotide - "+nucleotide+" at #"+index)
 
 	return obin
 
@@ -468,11 +463,16 @@ def compliment_string(string, encoding):
 	"""
 		returns the inverse complement of the input string with BioEncoding
 	"""
-	from = encoding.keys()
-	to = encoding.compliment().keys()
-	output = ""
-	for char in string:
-		output += to[from.index(char)]
+	previous = encoding.keys()			# our list of input nucleotides
+	new = encoding.compliment().keys()	# list of output nucleotides
+	output = ""							# and somewhere to store the output
+
+	try:
+		for char in string:
+			output += new[previous.index(char)]
+	except(KeyError):
+		raise NucleotideError(nucleotide, "Unrecognized Nucleotide - "+nucleotide+" at #"+index)
+
 	return output
 
 def compliment_binary(bytes, encoding, flip=False, head=False):

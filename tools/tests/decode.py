@@ -11,7 +11,7 @@
 #	because this is how I want it to work. Four lines is tolerable.
 try:
 	from . import bin
-except(ImportError):
+except(ImportError, SystemError):
 	# this allows each individual test to be run as a script independently
 	from __init__ import bin
 
@@ -66,8 +66,8 @@ class decode(unittest.TestCase):
 				"11110011"
 			]
 		)
-	def test_storage_tail_static(self):
-		binary = byna.decode( self.static_rna_strand, self.rna_encoding, flip=True)
+	#def test_storage_tail_static(self):
+	#	binary = byna.decode( self.static_rna_strand, self.rna_encoding, flip=True)
 
 if __name__ == "__main__":
 	unittest.main(verbosity=2)

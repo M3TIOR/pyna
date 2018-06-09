@@ -11,7 +11,7 @@
 #	because this is how I want it to work. Four lines is tolerable.
 try:
 	from . import bin
-except(ImportError):
+except(ImportError, SystemError):
 	# this allows each individual test to be run as a script independently
 	from __init__ import bin
 
@@ -20,37 +20,39 @@ import random
 import copy
 import pyna
 
-class BioEncoding(unittest.TestCase):
+from pyna import BioEncodingError
+
+class bioencoding(unittest.TestCase):
 	def setUp(self):
 		self.default_storage = pyna.BioEncoding(
-			*pyna.Nucleotide.siblings("Hed", "Ehd", transient=-1),
-			*pyna.Nucleotide.siblings("Rp", "Pr"),
-			standby=pyna.Nucleotide("Dhe", transient=True)
+			*pyna.Nucleotide.couple("Hed", "Ehd", transient=-1),
+			*pyna.Nucleotide.couple("Rp", "Pr"),
+			standby = pyna.Nucleotide("Deh", transient=True)
 		)
 		self.default_executable = pyna.BioEncoding(
-			*pyna.Nucleotide.siblings("Hed", "Ehd", transient=-1),
-			*pyna.Nucleotide.siblings("Rp", "Pr"),
-			standby=pyna.Nucleotide("Dhe", transient=True)
+			*pyna.Nucleotide.couple("Deh", "Ehd", transient=-1),
+			*pyna.Nucleotide.couple("Rp", "Pr"),
+			standby = pyna.Nucleotide("Hde", transient=True),
 			executable=True
 		)
 		self.no_transient_storage = pyna.BioEncoding(
-			*pyna.Nucleotide.siblings("Do", "Od"),
-			*pyna.Nucleotide.siblings("Nt", "Tn")
+			*pyna.Nucleotide.couple("Do", "Od"),
+			*pyna.Nucleotide.couple("Nt", "Tn"),
 			standby=pyna.Nucleotide("Pe", transient=True)
 		)
 		self.no_standby_storage = pyna.BioEncoding(
-			*pyna.Nucleotide.siblings("Do", "Od"),
-			*pyna.Nucleotide.siblings("It", "Ti", transient=-1)
+			*pyna.Nucleotide.couple("Do", "Od"),
+			*pyna.Nucleotide.couple("It", "Ti", transient=-1)
 		)
 		self.no_transient_executable = pyna.BioEncoding(
-			*pyna.Nucleotide.siblings("Do", "Od"),
-			*pyna.Nucleotide.siblings("Nt", "Tn")
-			standby=pyna.Nucleotide("Pe", transient=True)
+			*pyna.Nucleotide.couple("Do", "Od"),
+			*pyna.Nucleotide.couple("Nt", "Tn"),
+			standby=pyna.Nucleotide("Pe", transient=True),
 			executable=True
 		)
 		self.no_standby_executable = pyna.BioEncoding(
-			*pyna.Nucleotide.siblings("Do", "Od"),
-			*pyna.Nucleotide.siblings("It", "Ti", transient=-1)
+			*pyna.Nucleotide.couple("Do", "Od"),
+			*pyna.Nucleotide.couple("It", "Ti", transient=-1),
 			executable=True
 		)
 
@@ -111,22 +113,22 @@ class BioEncoding(unittest.TestCase):
 		nte = self.no_transient_executable
 		nse = self.no_standby_executable
 
-		self.assertEqual( [s[key] for key in ["H","E","R","P"], [ 0, 1, 2, 3])
+		self.assertEqual( [s[key] for key in ["H","E","R","P"]], [ 0, 1, 2, 3])
 		self.assertEqual( s.is_storage(), True)
 
-		self.assertEqual( [e[key] for key in ["D","E","R","P"], [ 0, 0, 1, 1])
+		self.assertEqual( [e[key] for key in ["D","E","R","P"]], [ 0, 0, 1, 1])
 		self.assertEqual( e.is_executable(), True)
 
-		self.assertEqual( [nts[key] for key in ["D","O","N","T"], [ 0, 1, 2, 3])
+		self.assertEqual( [nts[key] for key in ["D","O","N","T"]], [ 0, 1, 2, 3])
 		self.assertEqual( nts.is_storage(), True)
 
-		self.assertEqual( [nss[key] for key in ["D","O","I","T"], [ 0, 1, 2, 3])
+		self.assertEqual( [nss[key] for key in ["D","O","I","T"]], [ 0, 1, 2, 3])
 		self.assertEqual( nss.is_storage(), True)
 
-		self.assertEqual( [nte[key] for key in ["D","O","N","T"], [ 0, 0, 1, 1])
+		self.assertEqual( [nte[key] for key in ["D","O","N","T"]], [ 0, 0, 1, 1])
 		self.assertEqual( nte.is_executable(), True)
 
-		self.assertEqual( [nse[key] for key in ["D","O","I","T"], [ 0, 0, 1, 1])
+		self.assertEqual( [nse[key] for key in ["D","O","I","T"]], [ 0, 0, 1, 1])
 		self.assertEqual( nse.is_executable(), True)
 
 	# XXX
@@ -142,16 +144,16 @@ class BioEncoding(unittest.TestCase):
 
 		self.assertEqual(s.switch(), True)
 		self.assertEqual( s.keys(), ["D","E","R","P"] )
-		self.assertEqual( [s[key] for key in ["D","E","R","P"], [ 0, 0, 1, 1])
+		self.assertEqual( [s[key] for key in ["D","E","R","P"]], [ 0, 0, 1, 1])
 
-		self.assertEqual(s.switch(), True)
+		self.assertEqual(e.switch(), True)
 		self.assertEqual( e.keys(), ["H","E","R","P"] )
-		self.assertEqual( [e[key] for key in ["H","E","R","P"], [ 0, 1, 2, 3])
+		self.assertEqual( [e[key] for key in ["H","E","R","P"]], [ 0, 1, 2, 3])
 
-		self.assertRaises(nts.switch(), pyna.BioEncodingError)
-		self.assertRaises(nss.switch(), pyna.BioEncodingError)
-		self.assertRaises(nte.switch(), pyna.BioEncodingError)
-		self.assertRaises(nse.switch(), pyna.BioEncodingError)
+		self.assertRaises(BioEncodingError, nts.switch)
+		self.assertRaises(BioEncodingError, nss.switch)
+		self.assertRaises(BioEncodingError, nte.switch)
+		self.assertRaises(BioEncodingError, nse.switch)
 
 		self.assertEqual(nts.switch(silent=True), False)
 		self.assertEqual(nss.switch(silent=True), False)

@@ -11,7 +11,7 @@
 #	because this is how I want it to work. Four lines is tolerable.
 try:
 	from . import bin
-except(ImportError):
+except(ImportError, SystemError):
 	# this allows each individual test to be run as a script independently
 	from __init__ import bin
 
@@ -39,7 +39,7 @@ class nucleotide(unittest.TestCase):
 		a.pair(t)
 		self.assertEqual(a.sibling(), t)
 
-		a.pair(u)
+		u.pair(a)
 		self.assertEqual(a.sibling(), u)
 		self.assertEqual(t.sibling(), a)
 
