@@ -4,9 +4,7 @@
 # M3TIOR 2018
 #
 
-from .errors import (
-
-)
+from .errors import *
 
 class Nucleotide(str):
 	"""Nucleotide Type"""
@@ -20,6 +18,11 @@ class Nucleotide(str):
 
 	def __str__(self):
 		return self.name
+
+	def pair(self, sibling):
+		""" Pairs the current nucleotide with 'sibling'. """
+		self.sibling = sibling
+		sibling.sibling = self
 
 	@staticmethod
 	def couple(n1, n2):
@@ -98,7 +101,7 @@ class BioEncoding():
 		# then we loop through our keys, because they are both:
 		#	in the alignment we need our output values to be in,
 		#	and they're already in the format we need to check agains
-		for key in self.keys():
+		for key in self._keys:
 
 			# if our key belongs to the first pair, make it's value zero
 			if key in pairs[0]:
@@ -168,6 +171,8 @@ class BioEncoding():
 		#
 		# Needs DNA raw dna comparison to validate.
 		n = Nucleotide.standard()
+		n["G"].pair(n["C"])
+		n["A"].pair(n["T"])
 		return BioEncoding(n["G"],n["C"],n["A"],n["T"])
 
 	@staticmethod
@@ -182,6 +187,8 @@ class BioEncoding():
 		# shouldn't matter, as it would just need to be a constant medium for
 		# storing the nucleotide sequence in a more compact form factor.
 		n = Nucleotide.standard()
+		n["G"].pair(n["C"])
+		n["A"].pair(n["U"])
 		return BioEncoding(n["G"],n["C"],n["A"],n["U"])
 
 

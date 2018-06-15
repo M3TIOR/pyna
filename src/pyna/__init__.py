@@ -56,15 +56,16 @@ def encode_raw(inbytes, encoding=BioEncoding.DNA(), flip=False, phase=0):
 	#skip_direction = -1 if phase < 0 else 1
 
 	index = 0 # nucleotide counter
-	byte_c = len(inbytes)# byte count
+	n_index = 0 # define a place to store our nucleotide counter inside each byte
 
-	inset = abs(phase)
+	byte_c = len(inbytes)# byte count
 
 
 	# To flip the binary translation we just use the product of a positive
 	# or negative integer with our index to produce the correct,
 	# directionally adjusted index position for our array.
 	if flip:
+		# right to left
 		direction = -1
 
 		# compensate for negative memory justification
@@ -72,37 +73,76 @@ def encode_raw(inbytes, encoding=BioEncoding.DNA(), flip=False, phase=0):
 		index += 1
 
 		# if we flip the output, we need the farthest right two bits per byte
-		mask = ~3
+		mask = 3
 		def shift(num, amount):
 			# shift right to get bits from right to left
 			return num >> amount
+		def value(num, amount):
+			# bits are already aligned for extraction, no need to undo shift
+			return num
 
 	else:
+		# left to right (default character pointer increments to the right)
 		direction = 1
 
 		# by default we're always looking at the left two bits of each byte
 		# since the default reading order is left to right, when we append
 		# each character into the output string, it will be placed left to right
-		mask = ~192
+		mask = 192
 		def shift(num, amount):
 			# shift left to get bits from left to right
 			return num << amount
+		def value(num, amount):
+			# bits are not properly aligned for extraction, so we need to undo
+			# our previous shift.
+			return num >> amount
+
 
 	# for byte in blob:
-	while (index < byte_c):
+	while ( index < byte_c ):
 
+		# get the nucleotide container so we can start extracting them
 		n_byte = inbytes[index * direction]
-		n_byte_chars = ""
+		n_byte_chars = "" # define somewhere to store them (just in case)
 
+		# NOTE: possible different method, though it may be more expensive
+		#		so I'm not adding it until I build a copy and test it against
+		#		this one.
+		#
+		#while ( n < n_per_byte ):
+		#	# DIAGRAM
+		#	#    - 4 3 2 1 0 1 2 3 4 +
+		#	#    >ltr             rtl<
+		#	# %4   0 1 2 3 0 1 2 3 4
+		#	# MX   0 1 2 3 4 5 6 7 8
+		#	n_index = ( n * direction + n_per_byte ) % n_per_byte
+		#	mask =| bit for bit in [ 2**i for i in range(0, n_per_byte) ]
+		##
+		# I lack experience with generators so I can't make this work yet
+		# will investigate in the future
+
+		# loop through each nucleotide per byte (container)
 		for n in range(0, n_per_byte):
-			target = shift(n_value, (n_size * n))
-			n_value = 4 + ~(~mask & ~target)
+
+			# put the target bits of our byte in range to get filtered by
+			# our mask
+			target = shift(n_byte, (n_size * n))
+
+			# filter out the value with our mask, and undo the positional
+			# adjustment to retrieve our actual nucleotide value
+			n_value = value((mask+1) + ~(mask & ~target))
+
+			# add each encoded nucleotide to our temporary storage location
+			# before we push it out just in case things go wrong.
 			n_byte_chars += encoding.get_key(n_value)
 
+		# finally append the new nucleotides on to our main string and reset
 		outstring += n_byte_chars
-
 		index += 1 # increment pointer
 
+	# do phase adjustment post process to (hopefully) optimize it.
+	# NOTE: haven't actually researched the internals of python3's array
+	#		segment syntax yet.
 	if phase < 0:
 		return outstring[0, len(outstring)-phase]
 	elif phase > 0:
