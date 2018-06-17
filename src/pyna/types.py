@@ -4,43 +4,105 @@
 # M3TIOR 2018
 #
 
-from .errors import *
+# import function declarator contracts for testing
+from dpcontracts import ( require, ensure, invariant )
 
+# import local module necessities
+from .errors import ( NucleotideError, BioEncodingError )
+
+@invariant("sibling should always be a nucleotide",
+		lambda args: isinstance(args.self, Nucleotide))
 class Nucleotide(str):
-	"""Nucleotide Type"""
+	""" An object representing a nucleotide inside DNA or RNA.
 
+	Mimics the macroscopic function of a nucleotide taken from within the
+	double helix mollecule, DNA; and partner mollecule, RNA.
+
+	Args:
+		name (str): The name of the new nucleotide.
+		sibling (:obj:`Nucleotide`): Initial partner nucleotide for the new
+			object, defaults to None.
+
+	Attributes:
+		char (str): The first character of the name attribute uppercase.
+		name (str): The name of the nucleotide.
+		sibling (:obj:`Nucleotide`): The partner nucleotide when paired,
+			defaults to None.
+	"""
+	@require("`name` must be a string", lambda args: isinstance(args.name, str))
+	@require("`name` string must not be empty", lambda args: len(args.name) > 0)
+	@require("`sibling` must be None or Nucleotide",
+			lambda args: isinstance(args, Nucleotide) or isinstance(args, None))
 	def __init__(self, name, sibling=None):
-		# raise type errors at instanciation and optimize __str__ performance
-		self.char = str(name[0]).upper()
-
+		# raise type errors at instanciation for bad name input types
+		self.char = name[0].upper()
 		self.name = name # whatever we want the nucleotide represented by
-		self.sibling = sibling # holder for our sibling refference
+
+		# add option for sibling pairing at instanciation
+		if sibling:
+			self.pair(sibling)
 
 	def __str__(self):
 		return self.name
 
+	@require("`sibling` must be a Nucleotide",
+			lambda args: isinstance(args.sibling), Nucleotide)
 	def pair(self, sibling):
-		""" Pairs the current nucleotide with 'sibling'. """
-		self.sibling = sibling
-		sibling.sibling = self
+		""" Pairs the current nucleotide with `sibling`.
 
+		Args:
+			sibling (Nucleotide): The new partner of the current nucleotide.
+		"""
+		if self.sibling != None:
+			# if we have a sibling, we need to disconnect it before
+			# rebinding with a new sibling.
+			self.sibling.sibling = None
+
+		# pointer.to_that.to_this
+		self.sibling = sibling
+		self.sibling.sibling = self
+
+	@require("n1, and n2 must be strings",
+			lambda args: isinstance(args.n1, str) and isinstance(args.n2, str))
+	@ensure("output must be a two value tuple",
+			lambda args, result: isinstance(result, tuple) and len(result) == 2)
+	@ensure("output must only contain Nucleotides",
+			lambda args, result: isinstance(result[0], Nucleotide) and
+								isinstance(result[1], Nucleotide))
+	@ensure("both Nucleotides must be siblings",
+			lambda args, result: args.n1.sibling == args.n2 and
+								args.n2.sibling == args.n1)
 	@staticmethod
 	def couple(n1, n2):
-		""" Creates and returns two sibling nucleotides."""
+		""" Creates and returns two paired nucleotides.
+
+		Args:
+			n1 (str): The name of the first nucleotide.
+			n2 (str): The name of the second nucleotide.
+		"""
 		# make two new nucleotides
 		brother = Nucleotide(n1)
 		sister = Nucleotide(n2)
 
 		# make the two siblings
-		brother.sibling = sister
-		sister.sibling = brother
+		brother.pair(sister)
 
 		return (brother, sister) # return them in order
 
 	@staticmethod
 	def standard():
-		"""
-			Group of standard nuclotides with their pairs in DNA/RNA
+		""" Creates and returns a dictionary of nucleotides representing
+		those which formally compose both DNA and RNA molecules.
+
+		Note:
+			Nucleotides returned by this method are not bound by default
+			because they are reused between molecules, and pairing them
+			could cause conflicts durring later use.
+
+		Returns:
+			(:obj:`dict` of :obj:`Nucleotide`): A dictionary containing the
+				virtual nucleotide equivalents of *Adenine*, *Guanine,
+				*Cytosine*, *Thymine*, and *Uracil*.
 		"""
 		adenine = Nucleotide("Adenine")
 		cytosine = Nucleotide("Cytosine")
@@ -55,21 +117,31 @@ class Nucleotide(str):
 			]
 		}
 
+@invariant("must always have one nucleotide pair per encoding",
+		lambda self: len(self._nucleotides) > 1)
 class BioEncoding():
-	"""
-		Base class for implementing bitwise nucleotide encodings
+	""" Mimics the storage encoding function of DNA and RNA molecules.
+
+	Args:
+		*args (:obj:`Nucleotide`): The nucleotides used to preserve information
+			contained within the encoding.
+		long (:obj:`bool`, optional): The long name keyword argument, when true,
+			toggles the use of long nucleotide encodings. When long Nucleotides
+			are on, the resulting encoding will use the nucleotides names in
+			place of their identifier characters.
+
+			ex: ``AdenineThymineAdenineGuanineCytosine`` in place of ``ATAGC``.
 	"""
 
-	def __init__(self, n1, n2, n3, n4):
+	@require("must be supplied with more than one nucleotide",
+			lambda args: len(args.nucleotides) > 1 )
+	@require("long flag must be a boolean value",
+			lambda args: isinstance(args.long, bool))
+	def __init__(self, *nucleotides, long=False):
 		# positional args enforce strictness
 
-		# NOTE:
-		#	Make a copy of the input variables instead of using them
-		#	in place just in case someone decides to create two different
-		#	bioencodings with the same nucleotides.
-		#
-		#	This is also a read only data structure
-		self._nucleotides = [n1, n2, n3, n4] # carry out strict indexing
+		# This is a read only data structure, contain the nucleotides in order.
+		self._nucleotides = nucleotides # carry out strict indexing
 
 		for n in self._nucleotides:
 			# make sure our nucleotides don't have their siblings out of bounds
@@ -79,88 +151,151 @@ class BioEncoding():
 			if n.sibling not in self._nucleotides:
 				raise BindingError(n, "sibling does not exist locally to the encoding!")
 
-		# pre-allocate keys, storage and executable values (optimization)
-		self._keys = [n1.char, n2.char, n3.char, n4.char]# designate keys
-		self._bin = self._exval()# designate executable values
-
-	def _exval(self):
-		values = [] # define a list container for our output values
-		pairs = [] # define a container for our pairs
-		found = [] # so we don't have repeat pairs
-
-		for n in self._nucleotides:
-			if n not in found:
-				# add pairs to list so we can binary search
-				# NOTE: there will only ever be two
-				pairs.append([str(n), str(n.sibling)])
-
-				# add pair to the found values list
-				found.append(str(n))
-				found.append(str(n.sibling))
-
-		# then we loop through our keys, because they are both:
-		#	in the alignment we need our output values to be in,
-		#	and they're already in the format we need to check agains
-		for key in self._keys:
-
-			# if our key belongs to the first pair, make it's value zero
-			if key in pairs[0]:
-				values.append(0)
-			else:
-				# if our key is in the second pair, make it's value one
-				values.append(1)
-
-		# the result is a one way binary encoding
-		return values
+		# pre-allocate keys, paired values (optimization)
+		# designate keys
+		if long:
+			self._keys = [n.name for n in nucleotides]
+		else:
+			self._keys = [n.char for n in nucleotides]
+		# # designate paired values
+		self._paired = self._paired_values() # it looks cleaner in a subroutine
 
 	def __len__():
-		return 4
+		return len(self._nucleotides)
 
-	def get_key(self, index):
-		""" Returns the key value of the given index """
-		return self._keys[index]
+	@ensure("""result must be a list of values,
+	 		who's sum is equal to the encoding's nucleotide count""",
+			lambda args, result: sum(result) == len(args.self))
+	def _paired_values(self):
+		""" Returns a list of values and keys, where each
+			pair of keys is assigned the same value. """
+		# make a container list the same size as our nucleotide count
+		values = [ None for n in range(0, len(self._nucleotides) ]
+		pairs = 0 # add a counter to track the LVC value for each pair
 
-	def get_quadernary(self, key):
-		""" Returns the quaternary value of the input key. """
-		return self._keys.index(key)
+		# per each unique nucleotide
+		for n in range(0, len(self._nucleotides)):
+			# we make sure we haven't already set it's value
+			if not values[n]:
+				# when we don't already have a value for the nucleotide
+				# we assign it a new value using the LVC counter
+				values[n] = pairs
+				# and assign it's sibling as well. When this is passed over
+				# again by the loop it will just be skipped since it already
+				# has a value.
+				values[ self._nucleotides.index(
+						self._nucleotides[n].sibling) ] = pairs
+						# target the sibling memory location by using
+						# it's nucleotide index and assign it the same
+						# value as it's partner.
 
-	def get_binary(self, key):
-		""" Returns the binary value of a key's family. """
-		return self._bin[self._keys.index(key)]
+				pairs += 1 # increment the LVC counter
 
-	def compliment_key(self, ikey):
-		""" Returns the complimentary nucleotide key for 'ikey'"""
-		return self._nucleotides[self._keys.index(ikey)].sibling.char
-
-	def compliment_quadernary(self, key):
-		""" Returns the complimentary nucleotide quadernary for 'key'"""
-		return self._nucleotides.index(
-			self._nucleotides[
-				self._keys.index(ikey)
-			].sibling
-		)
-
-	def compliment_binary(self, key):
-		""" Returns the complimentary nucleotide binary for 'key'"""
-		return self._bin[
-			self._nucleotides.index(
-				self._nucleotides[
-					self._keys.index(ikey)
-				].sibling
-			)
-		]
+		# then return our pair value populated list
+		return values
 
 	def as_bytes():
-		"""
-			Returns the encoding object's bytecode representation.
-		"""
+		""" Returns a bytes object representing the encoding as bytecode. """
 		pass
+
+	@require("`value` must be an int", lambda args: isinstance(args.value, int))
+	def get_key(self, value):
+		""" Retrive and return the nucleotide key equivalent of `value`.
+
+		Args:
+			value (str): The target encoded nucleotide's value.
+		"""
+		return self._keys[value]
+
+	@require("`key` must be a string", lambda args: isinstance(args.key, str))
+	def get_value(self, key):
+		""" Retrive and return the nucleotide value equivalent of `key`.
+
+		Args:
+			key (str): The character representing the target encoded nucleotide
+				value. When long mode is enabled, this will be the nucleotide's
+				name instead.
+		"""
+		# since the nucleotide values are equal to their positions
+		# when passed into the new encoding instance, we just return
+		# the index for the input key/identifier
+		return self._keys.index(key)
+
+	def get_paired_value(self, target):
+		""" Retrieve and return the target nucleotides associated pair value.
+
+		Args:
+			target (:obj:`object`): The nucleotide we're retrieving the paired
+				value of.
+
+				When target is a string, the nucleotide's indentifier key is
+				used to find it's associated pair's value.
+
+				When target is an interger, the nucleotide's value is used to
+				find it's associated pair's value.
+		"""
+		if isinstance(target, str):
+			# grab the paired value using the key's index same as value.
+			return self._paired[self._keys.index(target)]
+		elif isinstance(target, int):
+			# raw index list refference.
+			return self._paired[target]
+		else:
+			raise TypeError(target, "expected str or int, got: "+typeof(target))
+
+	def compliment_key(self, target):
+		""" Retrieve and return the key of the target nucleotide's partner.
+
+		Args:
+			target (:obj:`object`): The nucleotide who's sibling's key we're
+				retrieving.
+
+				When target is a string, the nucleotide's indentifier key is
+				used to find it's sibling's key.
+
+				When target is an interger, the nucleotide's value is used to
+				find it's sibling's key.
+		"""
+		if isinstance(value, str):
+			# use the key indexing method to get the appropriate nucleotide
+			# then index the nucleotide's sibling to get the appropriate key
+			# index.
+			return self._keys[ self._nucleotides.index(
+					self._nucleotides[ self._keys.index(target) ].sibling )]
+		elif isinstance(value, int):
+			# less complicated but basically the same as above. (direct index)
+			return self._keys[ self._nucleotides.index(
+					self._nucleotides[ target ].sibling )]
+		else:
+			raise TypeError(target, "expected str or int, got: "+typeof(target))
+
+	def compliment_value(self, target):
+		""" Retrieve and return the key of the target nucleotide's partner.
+
+		Args:
+			target (:obj:`object`): The nucleotide who's sibling's value we're
+				retrieving.
+
+				When target is a string, the nucleotide's indentifier key is
+				used to find it's sibling's value.
+
+				When target is an interger, the nucleotide's value is used to
+				find it's sibling's value.
+		"""
+		# same as in compliment_key method, just return the key's index instead.
+		# :P "SIMPLE"
+		if isinstance(target, str):
+			return self._nucleotides.index(
+				self._nucleotides[ self._keys.index(target) ].sibling )
+		elif isinstance(target, int):
+			return self._nucleotides.index(
+				self._nucleotides[ target ].sibling )
+		else:
+			raise TypeError(target, "expected str or int, got: "+typeof(target))
 
 	@staticmethod
 	def DNA():
-		"""
-			Base class for implementing DNA translation
-		"""
+		""" Deoxyribonucleic Acid (DNA) encoding """
 		# A pairs with G
 		# C pairs with T
 		#
@@ -177,9 +312,7 @@ class BioEncoding():
 
 	@staticmethod
 	def RNA():
-		"""
-			Bitwise encoding for Ribonucleic Acid
-		"""
+		""" Ribonucleic Acid (RNA) encoding """
 		# There are a lot of combonations here. Which realistically should all be
 		# tested against an actual rna sample from a living cell.
 		#
