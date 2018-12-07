@@ -19,6 +19,11 @@ class NucleotideError(Error):
 	""" Errors that arise because of conflicts with Nucleotides """
 	pass
 
+class BindingError(NucleotideError):
+	""" Raised when attempting to pair a nucleotide that already has a sibling
+		or when a transient tries to pair itself with another transient"""
+	pass
+
 class BioEncodingError(Error):
 	""" Errors raised from problems with BioEncodings """
 	pass

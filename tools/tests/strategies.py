@@ -4,11 +4,10 @@
 # M3TIOR 2018
 #
 
-#NOTE:
-#	This library doesn't need to import anything from the testing library
-#	since it's just here to store our global strategy lookups. I preffer this
-#	over the "register_type_strategy" method since using it would undermine
-#	modularity to a certain extent.
+#NOTE: I accidentally lied... promise...
+# We still need to have pyna's path registered within this scope to access
+# the types we're declaring strategies for. (-_-)
+import __init__
 
 #XXX: grab all refferences from hypothesis.strategies and add to them.
 from hypothesis.strategies import *

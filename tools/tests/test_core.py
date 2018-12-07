@@ -5,17 +5,8 @@
 #
 
 # globals import
-# XXX:
-#	these imports are really weird because of how I'm stucturing things.
-#	I'm not changing the current archetecture unless it causes future problems
-#	because this is how I want it to work. Four lines is tolerable.
-try:
-	from . import bits, int_from_bits
-	from .strategies import nucleotides, bioencodings, integers
-except(ImportError, SystemError):
-	# this allows each individual test to be run as a script independently
-	from __init__ import bits, int_from_bits
-	from strategies import nucleotides, bioencodings, integers
+# NOTE: also, add path for pyna import
+from __init__ import bits, int_from_bits
 
 # BUILTIN IMPORTS
 import unittest
@@ -28,6 +19,8 @@ import pyna
 
 # HYPOTHESIS LIBRARY TESTING ASSIST
 from hypothesis import given
+from hypothesis.strategies import integers
+from strategies import nucleotides, bioencodings
 
 class core(unittest.TestCase):
 

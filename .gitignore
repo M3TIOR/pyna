@@ -1,2 +1,11 @@
+# remove built library from commits
 build/
+
+# keep python bytecode out of commits
 **/__pycache__/
+
+# keep hypothesis library objects out of commits
+**/.hypothesis/
+
+# personal scratch files
+scratch/

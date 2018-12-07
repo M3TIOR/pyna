@@ -28,3 +28,7 @@ class BioWriter():
 		self.encoding = encoding
 		self.flip = flip
 		self.head = head
+
+
+class BioViewer():
+	pass

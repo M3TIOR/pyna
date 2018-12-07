@@ -21,14 +21,13 @@ The encoding metadata immediately succeeds the signature, and contains the infor
 
 |  Byte Index  |      Description      |
 |:------------:|:----------------------|
-|     1-4      | Zero value nucleotide pair
-|     5-8      | One value nucleotide pair
-|     9-12     | Two value nucleotide pair
-|    13-16     | Three value nucleotide pair
-|    17-20     | Transient standby pair
+|     1-3      | Zero value nucleotide pair
+|     4-6      | One value nucleotide pair
+|     7-9      | Two value nucleotide pair
+|    10-12     | Three value nucleotide pair
 
 #### Nucleotide Pairs
-Each nucleotide pair is identified as a four byte segment. The first byte in each nucleotide pair is the character identifier respective to the value of the current identifier index starting with zero. The second byte is the current nucleotide's sibling. The third is an ASCII Space or Tab character; pairs followed by a space are static nucleotides, pairs followed by a tab character are considered transient. Finally, each nucleotide is terminated by a newline character.
+Each nucleotide pair is identified as a three byte segment. The first byte in each nucleotide pair is the character identifier respective to the value of the current identifier index starting with zero. The second byte is the current nucleotide's sibling. Finally, each nucleotide is terminated by a newline character.
 
 ## Chunk Data
 
