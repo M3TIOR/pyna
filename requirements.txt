@@ -1,0 +1,4 @@
+#!/usr/bin/env python3 -m pip -r
+
+# contracts support for easier debugging and unit testing
+dpcontracts <= 0.3.0

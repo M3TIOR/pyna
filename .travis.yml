@@ -1,0 +1,35 @@
+language: python
+
+# limit deployment to python 3.5 and 3.6 for now
+# definitely not python2
+python:
+    - "3.5"
+    - "3.6"
+
+after_install: # special config
+    - mkdir build # it's not generated, so make a place to put our compiled src
+    - cp -rf src/* build/ # since this is a script, copy over contents from src
+
+script: python ./tools/tests # run tests for repo
+
+before_deploy:
+    - cd build # make sure we only deploy the contents output to the build directory
+
+deploy:
+    provider: pypi # Python Pip packages go here
+
+    # User information for deployment to pypi
+    user: "m3tior"
+    password: # XXX MAKE SURE IT"S SECURE BECAUSE THIS IS MY PERSONAL ACCOUNT! XXX
+        secure: "ArKRm1bqgB7R5kHXw/OSX1puoen8mNAj3a9LP6IisPaBiBcZtN0t7w94mSClcs2Zt9o2g09JzDWq5jw8VJa2S/neKhXHN5c3A5jUBqAspPgJvYGfQt1WG9/KLuUt6SRgaUt77Vqlb2DhhPy8kdLjvrrpOyXu77+9RosyecWScPu/D6UYqt/Jng6lIPRfvKC3zxgsk80pHCXqZQeYFo0e3w1fpjZ2ZvCEqoOAeXH8M5NEdVnnSXyAWcTuWiRKqg2c+c60y6Yrq+qsfETQgbYOs1nXXcHCO1CbceHXxfdq8Q7WyerLogJSODWZ7cpKsnQpKO/HrKzwfgsMcuL749Fk1lrCKPQyfffbvrIDjidmdFXbxroz9QBvJ7L46I48ZmsCH2cz5bJkx7V3e2kR0mAfZyhF16Yx+Li1llEhMspUXudeQsY7/O7pXfrKNCMAT2u4yffsxqjpo9wbiUJ+axdKTO8Wk+dIaljYWUFOH05vSJD3s2H4kcAkfScTAq+p5RLj1fUG4oVfVN30EfZB5/MK7NHOFgZ6HKKtOCGDOW+zbG6buE1jjRAOcFNKwZW1EHp1rQ1HrN+NQxldV8lH3CgFQHMVImteIUHjEnX3J+edeu3AytOv8hDr5kRJdVHx3ZrevTStYx/nDUdVe/c8YSgggz6iF8m0LDLTL7/qJp2o7ss="
+
+    # make sure we don't destroy the build files
+    skip_cleanup: true
+
+    # we're going to release both source and wheel distros because why not
+    distributions: "sdist bdist_wheel"
+
+    # limit deployments to the master branch per each tagged as version release
+    on:
+        branch: master
+        tags: true
